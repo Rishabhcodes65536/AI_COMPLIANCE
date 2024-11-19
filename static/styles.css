@@ -1,0 +1,199 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body and Font */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #fdfdfd;
+  color: #1c1c1e;
+  line-height: 1.6;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto; /* Adds vertical margin */
+  width: 50%; /* Creates a centered bar */
+  background-color: #e8edf7;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 8px; /* Rounded corners */
+  padding: 10px 20px;
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 60%;
+}
+
+.navbar-brand .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4a00e0;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  color: #1c1c1e;
+  font-size: 1rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.navbar-links a:hover {
+  color: #4a00e0;
+}
+
+.btn-demo {
+  background-color: #4a00e0;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.btn-demo:hover {
+  background-color: #3a00c0;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 100px 20px;
+  background-color: #f7f7ff;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4a00e0;
+  margin-bottom: 20px;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #666666;
+}
+
+
+.navbtn{
+  border-radius: 8px solid black;
+  color: rgba(67, 83, 63, 0.1);
+}
+
+
+
+/* Container styling */
+.container {
+    background-color: #f7f7ff;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 15px;
+    padding: 30px 50px;
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+    position: absolute;
+    left: 30%;
+}
+
+.container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Header styling */
+h1 {
+    font-size: 2rem;
+    color: #1a202c;
+    margin-bottom: 15px;
+}
+
+/* Label styling */
+label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #4a5568;
+    margin-bottom: 8px;
+    display: block;
+    text-align: left;
+}
+
+/* Input field styling */
+input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 8px rgba(49, 130, 206, 0.5);
+}
+
+/* Button styling */
+button {
+    background: linear-gradient(120deg, #3182ce, #63b3ed);
+    color: #ffffff;
+    font-size: 1rem;
+    padding: 12px 20px;
+    /* border: 6px #4299e1; */
+    border:none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background: linear-gradient(120deg, #2b6cb0, #4299e1);
+    transform: translateY(-2px);
+}
+
+/* Footer styling */
+.footer {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.footer p {
+    margin: 0;
+}
+
+/* Add a slight animation for better aesthetics */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    animation: fadeIn 0.6s ease-out;
+    /* background-color : inherit; */
+}
