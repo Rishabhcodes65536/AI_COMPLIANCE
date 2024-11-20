@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import hashlib
 from datetime import datetime
+import logging
 
 
 load_dotenv()
@@ -38,7 +39,7 @@ def get_answer(question):
 
     # Send request
     response = requests.post(API_URL, headers=headers, json=data)
-
+    app.logger.info(response)
     # Parse the response JSON and get the answer
     if response.status_code == 200:
         response_data = response.json()
@@ -68,7 +69,7 @@ def get_page_info(url):
     try:
         response = requests.get(url)
         response.raise_for_status() 
-        
+        app.logger.info(response.text)
         page_content = response.text
         page_hash = hashlib.md5(page_content.encode('utf-8')).hexdigest()
         
