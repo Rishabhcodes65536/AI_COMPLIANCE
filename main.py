@@ -6,6 +6,12 @@ import hashlib
 from datetime import datetime
 import logging
 from dotenv import load_dotenv
+import logging
+import PyPDF2
+from docx import Document
+
+import textract
+from werkzeug.utils import secure_filename
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +46,51 @@ google = oauth.register(
 
 # Global variable to track the last known hash of the webpage
 last_known_hash = None
+
+
+
+
+
+def send_to_api(query, user, files=None, conversation_id="", response_mode="blocking"):
+    """
+    Send a request to the external API with the given parameters.
+
+    Args:
+        query (str): The question or query to send.
+        user (str): The user identifier.
+        files (list): List of file paths (optional).
+        conversation_id (str): Conversation ID for context (default is "").
+        response_mode (str): The response mode (default is "blocking").
+
+    Returns:
+        dict: The JSON response from the API, or an error message if the request fails.
+    """
+    headers = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json'
+    }
+
+    # Construct the payload
+    data = {
+        "inputs": {},
+        "query": query,
+        "response_mode": response_mode,
+        "conversation_id": conversation_id,
+        "user": user,
+        "files": files if files else []
+    }
+
+    try:
+        response = requests.post(API_URL, headers=headers, json=data)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"API Request failed: {e}")
+        return {"error": f"API Request failed: {str(e)}"}
+    except ValueError as e:
+        logging.error(f"Failed to decode JSON response: {e}")
+        return {"error": "Failed to decode JSON response"}
+
 
 
 def fetch_webpage_content(url):
@@ -195,6 +246,110 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
+
+
+#file upload section
+
+
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx'}
+
+
+
+def extract_text_from_pdf(file):
+    """
+    Extract text from a PDF file.
+    """
+    try:
+        # Open the file
+        pdf_reader = PyPDF2.PdfReader(file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+        app.logger.info(text)
+        return text
+    except Exception as e:
+        app.logger.error('no text')
+        raise ValueError(f"Failed to extract text from PDF: {str(e)}")
+
+from docx import Document
+
+def extract_text_from_docx(file):
+    """
+    Extract text from a DOCX file.
+    """
+    try:
+        doc = Document(file)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        return text
+    except Exception as e:
+        raise ValueError(f"Failed to extract text from DOCX: {str(e)}")
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# Helper function to check file format
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+# Route for homepage
+@app.route('/files')
+def index():
+    return render_template('file_upload.html')
+
+
+
+def extract_text_from_file(file):
+    """
+    Extract text from an uploaded file.
+    Supports PDF and DOCX formats.
+    """
+    if file.filename.endswith('.pdf'):
+        return extract_text_from_pdf(file)
+    elif file.filename.endswith('.docx'):
+        return extract_text_from_docx(file)
+    else:
+        raise ValueError("Unsupported file format. Only PDF and DOCX are allowed.")
+
+
+# Route to handle file uploads
+@app.route('/upload', methods=['POST'])
+def upload_files():
+    """
+    Endpoint for uploading files, extracting text, and interacting with LLM.
+    """
+    uploaded_files = request.files.getlist("files")
+    combined_text = ""  # Initialize an empty string to hold combined text
+
+    # Extract text from uploaded files
+    for file in uploaded_files:
+        try:
+            extracted_text = extract_text_from_file(file)  # Replace with your actual extraction logic
+            combined_text += f"\n---File Separator---\n{extracted_text}"
+        except Exception as e:
+            return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
+
+    # Send combined text to the LLM
+    app.logger.info(combined_text)
+    try:
+        response = get_answer(combined_text)  # Pass the concatenated string to the LLM function
+    except Exception as e:
+        return jsonify({"error": f"Failed to interact with LLM: {str(e)}"}), 500
+
+    return jsonify({"response": response})
+
+
+# Route to handle file deletion
+@app.route('/delete/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return jsonify({'message': f'{filename} deleted successfully'})
+    else:
+        return jsonify({'error': f'{filename} not found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

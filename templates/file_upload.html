@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .file-list {
+            margin-top: 10px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Compliance Check</h1>
+        <p>Upload up to 5 documents (PDF or DOCX). Extracted text will be sent for processing.</p>
+
+        <form id="uploadForm">
+            <input type="file" id="fileInput" name="files" multiple accept=".pdf,.docx" />
+            <div id="fileList" class="file-list"></div>
+            <button type="button" onclick="submitFiles()">Submit</button>
+        </form>
+
+        <h2>Response</h2>
+        <pre id="responseOutput"></pre>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const responseOutput = document.getElementById('responseOutput');
+        const uploadedFiles = new Map(); // Track uploaded files
+
+        // Update file list
+        fileInput.addEventListener('change', () => {
+            fileList.innerHTML = ''; // Clear list
+            const files = fileInput.files;
+            if (files.length > 5) {
+                alert('You can only upload up to 5 files at a time.');
+                fileInput.value = ''; // Clear files
+                return;
+            }
+
+            Array.from(files).forEach(file => {
+                if (!['pdf', 'docx'].includes(file.name.split('.').pop().toLowerCase())) {
+                    alert(`Invalid file type: ${file.name}`);
+                    return;
+                }
+                uploadedFiles.set(file.name, file); // Track files
+                const listItem = document.createElement('div');
+                listItem.className = 'file-item';
+                listItem.innerHTML = `
+                    <span>${file.name}</span>
+                    <button type="button" onclick="deleteFile('${file.name}')">Delete</button>
+                `;
+                fileList.appendChild(listItem);
+            });
+        });
+
+        // Delete file
+        function deleteFile(filename) {
+            uploadedFiles.delete(filename);
+            fileList.innerHTML = '';
+            uploadedFiles.forEach((_, name) => {
+                const listItem = document.createElement('div');
+                listItem.className = 'file-item';
+                listItem.innerHTML = `
+                    <span>${name}</span>
+                    <button type="button" onclick="deleteFile('${name}')">Delete</button>
+                `;
+                fileList.appendChild(listItem);
+            });
+        }
+
+        // Submit files
+        async function submitFiles() {
+            const formData = new FormData();
+            uploadedFiles.forEach(file => formData.append('files', file));
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    responseOutput.textContent = `Error: ${data.error}`;
+                } else {
+                    responseOutput.textContent = `LLM Response:\n${data.response}`;
+                }
+            } catch (err) {
+                responseOutput.textContent = `Error: ${err.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
