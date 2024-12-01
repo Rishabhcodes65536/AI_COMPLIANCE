@@ -10,6 +10,12 @@ import logging
 import PyPDF2
 from docx import Document
 
+from datetime import datetime
+
+
+initial_date = datetime(2024, 11, 1)  # Example hardcoded date (today's date or any fixed date)
+
+
 import textract
 from werkzeug.utils import secure_filename
 
@@ -25,6 +31,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 URL = 'https://www.revisor.mn.gov/statutes/cite/245D/full'
 
 # Initialize Flask app
+
+
 app = Flask(__name__)
 app.secret_key = SECRET_KEY  # Required for session management
 app.logger.setLevel(logging.INFO)
@@ -41,7 +49,7 @@ google = oauth.register(
     authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
     userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
-    client_kwargs={'scope': 'openid email profile'}
+    client_kwargs={'scope': 'email profile'}
 )
 
 # Global variable to track the last known hash of the webpage
@@ -170,7 +178,6 @@ def ask():
     answer = get_answer(question)
     return render_template('answer.html', question=question, answer=answer)
 
-
 @app.route('/check-update', methods=['GET'])
 def check_update():
     """
@@ -183,24 +190,28 @@ def check_update():
     if current_hash is None:
         return jsonify({"error": "Failed to fetch the page."}), 500
 
+    # Calculate the date range (from initial_date to now)
+    current_date = datetime.now()
+    date_range = f"From {initial_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
+
     if last_known_hash is None:
         last_known_hash = current_hash
         return jsonify({
             "message": "Initial check completed, no changes detected.",
-            "last_modified": last_modified_time.isoformat() if last_modified_time else "Unknown"
+            "date_range": date_range
         }), 200
     elif current_hash != last_known_hash:
         last_known_hash = current_hash
         return jsonify({
             "message": "The webpage has been updated.",
-            "last_modified": last_modified_time.isoformat() if last_modified_time else "Unknown"
+            "date_range": date_range
         }), 200
     else:
         return jsonify({
             "message": "No changes detected.",
-            "last_modified": last_modified_time.isoformat() if last_modified_time else "Unknown"
+            "date_range": date_range
         }), 200
-
+    
 
 # Google OAuth Routes
 @app.route('/login')
@@ -208,23 +219,29 @@ def login():
     """
     Redirect the user to Google's OAuth 2.0 authorization page.
     """
-    return google.authorize_redirect(url_for('authorize', _external=True))
+    # if 'user' in session:
+    #     return redirect(url_for('dashboard'))  # or any logged-in page
+    return google.authorize_redirect('http://localhost:5000/google/callback')
 
 
-@app.route('/authorize')
-def authorize():
+@app.route('/google/callback')
+def google_callback():
     """
     Handle the callback from Google OAuth and fetch the user's profile.
     """
     try:
         token = google.authorize_access_token()
         user_info = google.get('userinfo').json()
+
+        if not user_info:
+            raise ValueError("Failed to fetch user info")  # Handle failure gracefully
+
         session['user'] = user_info
         app.logger.info(f"User logged in: {user_info}")
         return redirect(url_for('dashboard'))
     except Exception as e:
         app.logger.error(f"Error during Google OAuth: {e}")
-        return redirect(url_for('login'))
+        return redirect(url_for('home'))  # Avoid redirecting to login to break the loop
 
 
 @app.route('/dashboard')
@@ -235,7 +252,7 @@ def dashboard():
     user = session.get('user')
     if not user:
         return redirect(url_for('login'))
-    return render_template('dashboard.html', user=user)
+    return render_template('ui_dark.html', user=user)
 
 
 @app.route('/logout')
@@ -244,7 +261,7 @@ def logout():
     Log out the user by clearing the session.
     """
     session.clear()
-    return redirect(url_for('home'))
+    return  render_template('ui_dark.html')  # Redirect to login, not other routes
 
 
 
