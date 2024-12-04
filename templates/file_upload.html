@@ -74,23 +74,47 @@
             </div>
         </nav>
     </div>
-    <button class="btn btn-custom">Schedule a demo</button>
+     {% if user %}
+        <div class="dropdown">
+            <a href="#" class="text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+                Welcome, {{ user['name'] }}
+            </a>
+            <ul class="dropdown-menu bg-dark text-white">
+                <li><a href="/dashboard" class="dropdown-item text-white">Dashboard</a></li>
+                <li><a href="/logout" class="dropdown-item text-white">Logout</a></li>
+            </ul>
+        </div>
+    {% else %}
+        <a href="/login" class="btn btn-custom">Sign in with Google</a> <!-- Sign in with Google -->
+    {% endif %}
 </header>
-
 <main class="main-section">
     <div class="badge bg-secondary text-white mb-4">Compliance Check</div>
     <h1 class="display-5 fw-bold">Document Compliance Check</h1>
+
+    <!-- Form for File Upload and Asking Questions -->
     <section class="form-section text-center">
-        <form id="uploadForm">
-            <input type="file" id="fileInput" name="files" multiple accept=".pdf,.docx" class="form-control"/>
-            <div id="fileList" class="file-list mt-3"></div>
-            <button type="button" class="btn btn-custom mt-3" onclick="submitFiles()">Submit</button>
+        <form id="complianceForm">
+            <!-- File Upload Section -->
+            <div>
+                <input type="file" id="fileInput" name="files" multiple accept=".pdf,.docx" class="form-control"/>
+                <div id="fileList" class="file-list mt-3"></div>
+            </div>
+
+            <!-- Question Input Section -->
+            <div class="mt-3">
+                <input type="text" id="questionInput" class="form-control" placeholder="Ask a question related to the document..." />
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-custom" onclick="submitForm()">Submit</button>
+            </div>
         </form>
+
         <h2 class="mt-4">Response</h2>
         <pre id="responseOutput" class="text-white"></pre>
     </section>
 </main>
-
 <footer class="py-4">
     <div class="container">
         <div class="row">
@@ -129,62 +153,33 @@
         </div>
     </div>
 </footer>
-
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const fileList = document.getElementById('fileList');
-    const responseOutput = document.getElementById('responseOutput');
-    const uploadedFiles = new Map(); // Track uploaded files
+    const MAX_FILES = 5;
+    const uploadedFiles = new Map();
 
-    fileInput.addEventListener('change', () => {
-        const files = fileInput.files;
-        if (files.length > 5) {
-            alert('You can only upload up to 5 files at a time.');
-            fileInput.value = '';
+    // Handle form submission
+    async function submitForm() {
+        const fileInput = document.getElementById('fileInput');
+        const questionInput = document.getElementById('questionInput');
+        const fileList = document.getElementById('fileList');
+        const responseOutput = document.getElementById('responseOutput');
+        const submitButton = document.querySelector('button[type="button"]');
+
+        // Show loading spinner
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+
+        const formData = new FormData();
+        uploadedFiles.forEach(file => formData.append('files', file));
+        const question = questionInput.value;
+
+        if (question.trim() === '') {
+            alert('Please enter a question!');
+            resetSubmitButton();
             return;
         }
 
-        Array.from(files).forEach(file => {
-            if (!['pdf', 'docx'].includes(file.name.split('.').pop().toLowerCase())) {
-                alert(`Invalid file type: ${file.name}`);
-                return;
-            }
-
-            // Add file to the map (if not already present)
-            if (!uploadedFiles.has(file.name)) {
-                uploadedFiles.set(file.name, file);
-
-                const listItem = document.createElement('div');
-                listItem.className = 'file-item';
-                listItem.setAttribute('data-filename', file.name); // Add custom attribute for easy identification
-
-                listItem.innerHTML = `
-                    <span>${file.name}</span>
-                    <button type="button" onclick="deleteFile('${file.name}')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-
-                // Append new file to the list
-                fileList.appendChild(listItem);
-            }
-        });
-    });
-
-    function deleteFile(filename) {
-        uploadedFiles.delete(filename);
-
-        const fileItems = document.querySelectorAll('.file-item');
-        fileItems.forEach(item => {
-            if (item.getAttribute('data-filename') === filename) {
-                item.remove();
-            }
-        });
-    }
-
-    async function submitFiles() {
-        const formData = new FormData();
-        uploadedFiles.forEach(file => formData.append('files', file));
+        formData.append('question', question);
 
         try {
             const response = await fetch('/upload', {
@@ -196,6 +191,71 @@
             responseOutput.textContent = data.error ? `Error: ${data.error}` : `LLM Response:\n${data.response}`;
         } catch (err) {
             responseOutput.textContent = `Error: ${err.message}`;
+        } finally {
+            resetSubmitButton();
+        }
+    }
+
+    // Reset submit button to its default state
+    function resetSubmitButton() {
+        const submitButton = document.querySelector('button[type="button"]');
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Submit';
+    }
+
+    // Handle file addition
+    document.getElementById('fileInput').addEventListener('change', () => {
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        Array.from(fileInput.files).forEach(file => {
+            if (uploadedFiles.size >= MAX_FILES) {
+                alert(`Maximum of ${MAX_FILES} files can be uploaded.`);
+                fileInput.value = '';
+                return;
+            }
+
+            if (!['pdf', 'docx'].includes(file.name.split('.').pop().toLowerCase())) {
+                alert(`Invalid file type: ${file.name}`);
+                return;
+            }
+
+            uploadedFiles.set(file.name, file);
+            const listItem = document.createElement('div');
+            listItem.className = 'file-item';
+            listItem.innerHTML = `
+                <span>${file.name}</span>
+                <button type="button" onclick="deleteFile('${file.name}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            fileList.appendChild(listItem);
+
+            if (uploadedFiles.size >= MAX_FILES) {
+                fileInput.disabled = true;
+            }
+        });
+    });
+
+    // Handle file deletion
+    function deleteFile(filename) {
+        uploadedFiles.delete(filename);
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((_, name) => {
+            const listItem = document.createElement('div');
+            listItem.className = 'file-item';
+            listItem.innerHTML = `
+                <span>${name}</span>
+                <button type="button" onclick="deleteFile('${name}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            fileList.appendChild(listItem);
+        });
+
+        if (uploadedFiles.size < MAX_FILES) {
+            document.getElementById('fileInput').disabled = false;
         }
     }
 </script>

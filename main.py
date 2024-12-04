@@ -317,46 +317,50 @@ def index():
     return render_template('file_upload.html')
 
 
-
+# Combine text with file titles for indexing
 def extract_text_from_file(file):
     """
     Extract text from an uploaded file.
     Supports PDF and DOCX formats.
     """
     if file.filename.endswith('.pdf'):
-        return extract_text_from_pdf(file)
+        text = extract_text_from_pdf(file)
     elif file.filename.endswith('.docx'):
-        return extract_text_from_docx(file)
+        text = extract_text_from_docx(file)
     else:
         raise ValueError("Unsupported file format. Only PDF and DOCX are allowed.")
+    
+    # Add title delimiter for indexing
+    return f"---Title: {file.filename}---\n{text}"
 
 
-# Route to handle file uploads
 @app.route('/upload', methods=['POST'])
 def upload_files():
     """
     Endpoint for uploading files, extracting text, and interacting with LLM.
     """
     uploaded_files = request.files.getlist("files")
-    combined_text = ""  # Initialize an empty string to hold combined text
+    combined_text = ""
 
     # Extract text from uploaded files
     for file in uploaded_files:
         try:
-            extracted_text = extract_text_from_file(file)  # Replace with your actual extraction logic
+            extracted_text = extract_text_from_file(file)
             combined_text += f"\n---File Separator---\n{extracted_text}"
         except Exception as e:
             return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
 
+    # Add user question
+    user_question = request.form.get("question", "")
+    combined_text += f"\n---User Question---\n{user_question}"
+
     # Send combined text to the LLM
-    app.logger.info(combined_text)
     try:
-        response = get_answer(combined_text)  # Pass the concatenated string to the LLM function
+        response = get_answer(combined_text)  # Replace with your actual LLM function
     except Exception as e:
         return jsonify({"error": f"Failed to interact with LLM: {str(e)}"}), 500
 
     return jsonify({"response": response})
-
 
 # Route to handle file deletion
 @app.route('/delete/<filename>', methods=['DELETE'])
