@@ -10,14 +10,14 @@ import logging
 import PyPDF2
 from docx import Document
 
+from werkzeug.utils import secure_filename
 from datetime import datetime
 
 
 initial_date = datetime(2024, 11, 1)  # Example hardcoded date (today's date or any fixed date)
 
 
-import textract
-from werkzeug.utils import secure_filename
+# import textract
 
 # Load environment variables
 load_dotenv()
@@ -79,6 +79,7 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
     }
     final_query="You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "+ query
     # Construct the payload
+    app.logger.info(final_query)
     data = {
         "inputs": {},
         "query": final_query,
@@ -221,7 +222,9 @@ def login():
     """
     # if 'user' in session:
     #     return redirect(url_for('dashboard'))  # or any logged-in page
-    return google.authorize_redirect('http://localhost:5000/google/callback')
+    redirect_uri = url_for('google_callback', _external=True)  # Generates full URL
+    return google.authorize_redirect(redirect_uri)
+    # return google.authorize_redirect('http://localhost:5000/google/callback')
 
 
 @app.route('/google/callback')
@@ -283,7 +286,7 @@ def extract_text_from_pdf(file):
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text()
-        app.logger.info(text)
+        # app.logger.info(text)
         return text
     except Exception as e:
         app.logger.error('no text')

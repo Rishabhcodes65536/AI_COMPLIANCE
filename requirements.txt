@@ -1,3 +1,7 @@
-Flask
-requests
-python-dotenv
+Flask==2.3.3
+authlib==1.2.0
+requests==2.31.0
+python-dotenv==1.0.0
+PyPDF2==3.0.1
+python-docx==0.8.11
+Werkzeug==2.3.7
