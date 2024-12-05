@@ -77,11 +77,11 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
         'Authorization': f'Bearer {API_KEY}',
         'Content-Type': 'application/json'
     }
-
+    final_query="You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "+ query
     # Construct the payload
     data = {
         "inputs": {},
-        "query": query,
+        "query": final_query,
         "response_mode": response_mode,
         "conversation_id": conversation_id,
         "user": user,
