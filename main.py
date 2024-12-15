@@ -101,7 +101,6 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
         return {"error": "Failed to decode JSON response"}
 
 
-
 def fetch_webpage_content(url):
     """
     Fetch the content of a webpage and return its MD5 hash and last modified timestamp.
@@ -163,6 +162,13 @@ def get_answer(question):
 
 # Routes
 @app.route('/', methods=['GET'])
+def root():
+    """
+    Render the homepage with the user interface.
+    """
+    return render_template('ui_light.html')
+
+@app.route('/home', methods=['GET'])
 def home():
     """
     Render the homepage with the user interface.
@@ -286,7 +292,7 @@ def extract_text_from_pdf(file):
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text()
-        # app.logger.info(text)
+        app.logger.info(text)
         return text
     except Exception as e:
         app.logger.error('no text')
