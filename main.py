@@ -166,14 +166,14 @@ def root():
     """
     Render the homepage with the user interface.
     """
-    return render_template('ui_light.html')
+    return render_template('new_ui.html')
 
 @app.route('/home', methods=['GET'])
 def home():
     """
     Render the homepage with the user interface.
     """
-    return render_template('ui_dark.html')
+    return render_template('new_ui.html')
 
 
 @app.route('/ask', methods=['POST'])

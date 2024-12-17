@@ -11,7 +11,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap" rel="stylesheet"/>
  </head>
- <body class="font-roboto bg-white text-black">
+ <div class="font-roboto bg-white text-black">
   <header class="flex justify-between items-center p-6">
    <div class="flex items-center">
     <!-- <img src="{{ url_for('static', filename='min_ai_logo.jpg') }}" alt="Company Logo" class="me-3" height="40" width="40" /> -->
@@ -41,9 +41,7 @@
     Within seconds
    </h1>
    <p class="text-gray-500 mt-6 text-lg">
-    The cutting-edge AI platform for checking 245D compliance,
-    <br/>
-    powered by latest AI technologies.
+    The First Regulatory Compliance Platform for AI Agents
    </p>
    <a href="/home">
    <button class="mt-10 px-6 py-3 bg-black text-white rounded-full text-lg">
@@ -113,13 +111,14 @@
   <!-- Small Circle -->
   <div class="absolute rounded-full bg-green-500 opacity-50 h-[200px] w-[200px]"></div>
   <!-- Lock Icon -->
-  <div class="z-10">
-    <img src="{{url_for_static('lock.png')}}" alt="Lock Icon" class="h-10 w-10">
-  </div>
+  <!-- <div class="z-10">
+    <img src="{{ url_for('static', filename='lock.png') }}" alt="Lock Icon" class="h-10 w-10">
+  </div> -->
+  <div>
      <i class="fas fa-lock text-white text-4xl"></i>
     </div>
    </div>
-  <!-- <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
    <h2 class="text-center text-3xl font-extrabold text-gray-900 mb-12">
     What people are saying
    </h2>
@@ -162,7 +161,7 @@
        </p>
       </div>
      </div>
-    </div> -->
+    </div>
    </div>
   </div>
  </body>
