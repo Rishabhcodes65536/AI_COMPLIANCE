@@ -292,7 +292,7 @@ def extract_text_from_pdf(file):
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text()
-        app.logger.info(text)
+        # app.logger.info(text)
         return text
     except Exception as e:
         app.logger.error('no text')
@@ -323,7 +323,7 @@ def allowed_file(filename):
 # Route for homepage
 @app.route('/files')
 def index():
-    return render_template('file_upload.html')
+    return render_template('files.html')
 
 
 # Combine text with file titles for indexing
@@ -349,7 +349,7 @@ def upload_files():
     Endpoint for uploading files, extracting text, and interacting with LLM.
     """
     uploaded_files = request.files.getlist("files")
-    combined_text = ""
+    combined_text = "You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "
 
     # Extract text from uploaded files
     for file in uploaded_files:
@@ -363,6 +363,7 @@ def upload_files():
     user_question = request.form.get("question", "")
     combined_text += f"\n---User Question---\n{user_question}"
 
+    app.logger.info(combined_text)
     # Send combined text to the LLM
     try:
         response = get_answer(combined_text)  # Replace with your actual LLM function

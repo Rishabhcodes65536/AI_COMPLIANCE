@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat UI with Panels and File Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgPrimary: '#22262b',
+                        panel: '#37383b',
+                        checkbox: '#6b6c70',
+                        checkmark: '#333437',
+                        buttonBlue: '#3b82f6',
+                        buttonHover: '#2563eb'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        /* Custom checkbox */
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #6b6c70;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        input[type="checkbox"]:checked::after {
+            content: '\2713'; /* Checkmark */
+            color: #333437;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        /* Modal Background */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        /* Modal Content */
+        .modal-content {
+            background-color: #37383b;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 400px;
+        }
+
+        #leftPanel,
+#collapsedPanel,
+#rightPanel {
+    margin: 10px;
+    padding: 15px;
+    background-color: #2e3136; /* Dark theme for panels */
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+#collapsedPanel {
+    /* width: 60px; */
+    /* display: flex; */
+    flex-direction: column;
+    align-items: center;
+    /* padding: 10px; */
+}
+
+#collapsedPanel .pdf-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+    background-color: #444; /* Dark background for icons */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+/* Chat Bubble Styling */
+.chat-bubble {
+    max-width: 75%;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #444; /* Dark background for bubbles */
+    border-radius: 10px;
+    color: #f0f0f0; /* Light text */
+    word-wrap: break-word;
+}
+
+.chat-bubble.user {
+    align-self: flex-end;
+    background-color: #3a3a3c; /* Slightly different shade for user messages */
+}
+
+.chat-bubble.ai {
+    align-self: flex-start;
+}
+
+#chatArea {
+    margin: 10px;
+    padding: 15px;
+    background-color: #2e3136;
+    border-radius: 8px;
+    overflow-y: auto;
+}
+
+
+/* Common Button Styling */
+.btn-add-pdf,
+.btn-add-pdf-minimal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0f0f0; /* Light text */
+    background-color: #3a3a3c; /* Dark themed background */
+    border: 1px solid #555; /* Subtle border */
+    border-radius: 30px; /* Rounded for a pill-shaped look */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); /* Slight shadow for elevation */
+}
+
+/* Hover State */
+.btn-add-pdf:hover,
+.btn-add-pdf-minimal:hover {
+    background-color: #444; /* Slightly lighter for hover */
+    color: #fff; /* Brighter text */
+    transform: translateY(-2px); /* Subtle lift effect */
+}
+
+/* Add PDF Button Styling */
+.btn-add-pdf {
+    background-color: #2e3136; /* Dark base color */
+    text-transform: uppercase; /* Makes text appear modern */
+}
+
+/* Minimal Button Styling */
+.btn-add-pdf-minimal {
+    width: 50px; /* Compact width */
+    height: 50px; /* Perfect circle */
+    font-size: 18px;
+    line-height: 1; /* Center aligns the + */
+    background-color: #3a3a3c;
+    border-radius: 50%; /* Circular button */
+}
+
+/* Hover States for Minimal Button */
+.btn-add-pdf-minimal:hover {
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.2); /* More prominent hover effect */
+}
+
+/* Focus Effect for Accessibility */
+.btn-add-pdf:focus,
+.btn-add-pdf-minimal:focus {
+    outline: 2px solid #666; /* Outline for focus state */
+    outline-offset: 2px;
+}
+
+
+    </style>
+</head>
+<body class="bg-bgPrimary text-white h-screen flex font-sans">
+    <!-- Left Panel: Sources -->
+    <div id="leftPanel" class="w-1/4 bg-panel p-4 border-r border-gray-700 transition-all duration-300">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+        <h1 class="text-lg font-semibold">Sources</h1>
+        <div id="collapser">
+            <i class="fas fa-angle-left"></i>
+        </div>
+        </div>
+        <!-- Source List -->
+        <button id="uploadButton" class="btn-add-pdf w-full">Add PDF</button>
+
+        <div id="sourceList" class="mt-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <span>Select all sources</span>
+                <input type="checkbox" id="selectAll" />
+            </div>
+            <!-- Placeholder for dynamically added PDFs -->
+        </div>
+    </div>
+
+    <!-- Collapsed Left Panel -->
+    <div id="collapsedPanel" class="hidden bg-panel w-12 flex flex-col items-center py-4 space-y-4 border-r border-gray-700">
+        <button id="addPdfCollapsed" class="text-gray-400 hover:text-gray-200">
+            <i class="fas fa-angle-right"></i>
+        </button>
+        <button id="uploadButton2" class="btn-add-pdf-minimal w-full">+</button>
+
+        <div id="checkedItems" class="space-y-2 text-center text-sm"></div>
+    </div>
+
+    <!-- Right Panel: Chat Section -->
+    <div id="rightPanel" class="w-3/4 flex flex-col ml-4">
+        <!-- Chat Header -->
+        <div class="bg-panel p-4 flex justify-between items-center border-b border-gray-700">
+            <h1 class="text-xl font-semibold">Chat</h1>
+        </div>
+        <!-- Chat Area -->
+        <div id="chatArea" class="flex-1 overflow-y-auto p-4 space-y-4 bg-panel">
+            
+        </div>
+        <!-- Chat Input -->
+        <div class="p-4 bg-panel border-t border-gray-700 sticky bottom-0">
+            <div class="flex">
+                <input id="chatInput" type="text" placeholder="Start typing..." class="w-full p-2 bg-gray-800 rounded-l text-white outline-none" />
+                <button id="submitSources" class="bg-buttonBlue p-2 rounded-r text-white hover:bg-buttonHover">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+<!-- Add Sources Modal -->
+<div id="uploadModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center">
+                <i class="fas fa-wifi text-white text-xl mr-2"></i>
+                <h2 class="text-2xl font-semibold">Minn-Ai</h2>
+            </div>
+            <button id="closeModal" class="text-gray-400 hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Content -->
+        <h2 class="text-2xl font-semibold mb-2">Add sources</h2>
+        <p class="text-gray-400 mb-6">Sources let Minn-Ai base its responses on the information that matters most to you.</p>
+
+        <!-- Upload Box -->
+        <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center mb-6">
+            <i class="fas fa-upload text-3xl text-gray-400 mb-4"></i>
+            <p class="text-xl font-semibold mb-2">Upload sources</p>
+            <input type="file" id="fileInput" class="hidden" multiple>
+            <label for="fileInput" class="text-blue-500 underline cursor-pointer">
+                Drag and drop or choose file to upload
+            </label>
+            <p class="text-gray-400">Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3)</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="flex items-center">
+            <i class="fas fa-database text-gray-400 mr-2"></i>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+                <div id="progressBar" class="bg-blue-500 h-2 rounded-full" style="width: 0%;"></div>
+            </div>
+            <span id="fileCount" class="ml-2 text-gray-400">0/50</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const uploadButton = document.getElementById('uploadButton');
+    const uploadButton2 = document.getElementById('uploadButton');
+    const uploadModal = document.getElementById('uploadModal');
+    const closeModal = document.getElementById('closeModal');
+    const fileInput = document.getElementById('fileInput');
+    const sourceList = document.getElementById('sourceList');
+    const submitSources = document.getElementById('submitSources');
+    const selectAll = document.getElementById('selectAll');
+    const progressBar = document.getElementById('progressBar');
+    const fileCount = document.getElementById('fileCount');
+    const chatInput = document.getElementById('chatInput');
+
+    const uploadedFiles = new Map(); // Use a Map to store files by name
+
+
+    // Add a user message bubble
+function addUserMessage(message) {
+    const chatArea = document.getElementById('chatArea');
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble user';
+    userBubble.textContent = message;
+    chatArea.appendChild(userBubble);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// Add an AI message bubble
+function addAIMessage(message) {
+    const chatArea = document.getElementById('chatArea');
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'chat-bubble ai';
+    aiBubble.textContent = message;
+    chatArea.appendChild(aiBubble);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+    // Open the modal
+    uploadButton.onclick = () => {
+        uploadModal.style.display = 'flex';
+    };
+
+    // Close the modal
+    closeModal.onclick = () => {
+        uploadModal.style.display = 'none';
+    };
+
+    // Handle file selection
+    fileInput.onchange = () => {
+        const files = Array.from(fileInput.files); // Convert FileList to Array
+
+        for (const file of files) {
+            if (!uploadedFiles.has(file.name)) {
+                uploadedFiles.set(file.name, file); // Store the actual File object
+                addSourceToList(file.name); // Add file name to the UI
+            }
+        }
+
+        // Update progress bar
+        const progressPercentage = (uploadedFiles.size / 50) * 100;
+        progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
+        fileCount.textContent = `${uploadedFiles.size}/50`;
+
+        // Reset file input
+        fileInput.value = '';
+    };
+
+    // Add source to the list
+    function addSourceToList(fileName) {
+        const sourceItem = document.createElement('div');
+        sourceItem.className = 'flex items-center justify-between my-2';
+        sourceItem.innerHTML = `
+            <div class="flex items-center">
+                <img src="https://img.icons8.com/color/48/pdf.png" alt="PDF Icon" class="w-5 h-5 mr-2" />
+                <span class="text-sm text-gray-300">${fileName}</span>
+            </div>
+            <input type="checkbox" value="${fileName}" class="form-checkbox text-blue-500" />
+        `;
+        sourceList.appendChild(sourceItem);
+    }
+
+    // Select all checkboxes
+    selectAll.onchange = () => {
+        const checkboxes = sourceList.querySelectorAll('input[type=checkbox]');
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    };
+
+    // Function to handle form submission
+function handleSubmission() {
+    const selectedFiles = [];
+    const formData = new FormData();
+
+    // Get selected files
+    sourceList.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+        const file = uploadedFiles.get(cb.value); // Get the file object by name
+        if (file) selectedFiles.push(file);
+    });
+
+    console.log(selectedFiles);
+    const userQuestion = chatInput.value.trim();
+
+    // Basic validations
+    if (!userQuestion) {
+        alert('Please enter a question.');
+        return;
+    }
+
+    if (selectedFiles.length === 0) {
+        alert('Please select at least one file.');
+        return;
+    }
+
+    console.log("Submitting files to API:", selectedFiles);
+    console.log("User question:", userQuestion);
+
+    // Add user's message bubble
+    addUserMessage(userQuestion);
+
+    // Append selected files and question to FormData
+    selectedFiles.forEach(file => formData.append('files', file)); // Append actual File objects
+    formData.append('question', userQuestion);
+
+    // API call
+    fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to submit files');
+            }
+            return response.json(); // Assuming the API response is in JSON format
+        })
+        .then(data => {
+            console.log("AI Response:", data);
+
+            // Add AI's response bubble
+            addAIMessage(data.response);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // Add error message bubble
+            const errorBubble = document.createElement('div');
+            errorBubble.className = 'bg-red-600 text-white p-2 rounded-lg self-start max-w-xs mb-2';
+            errorBubble.textContent = 'There was an error processing your request. Please try again.';
+            chatArea.appendChild(errorBubble);
+            chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the latest message
+        });
+
+         chatInput.value = '';
+}
+
+// Attach event listeners
+submitSources.onclick = handleSubmission;
+
+// Listen for Enter key on the chat input field
+chatInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent default form submission if inside a form
+        handleSubmission();
+    }
+});
+
+
+    // Reset modal after successful submission
+    function resetModal() {
+        uploadedFiles.clear(); // Clear the Map
+        sourceList.innerHTML = '';
+        progressBar.style.width = '0%';
+        fileCount.textContent = '0/50';
+        chatInput.value = '';
+        uploadModal.style.display = 'none';
+    }
+
+
+
+    //collapsing logic
+    const leftPanel = document.getElementById('leftPanel');
+    const collapsedPanel = document.getElementById('collapsedPanel');
+    const addPdfCollapsed = document.getElementById('addPdfCollapsed');
+
+    document.getElementById('collapser').addEventListener('click', () => {
+        leftPanel.classList.add('hidden');
+        collapsedPanel.classList.remove('hidden');
+    });
+
+    addPdfCollapsed.addEventListener('click', () => {
+        leftPanel.classList.remove('hidden');
+        collapsedPanel.classList.add('hidden');
+    });
+</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+</body>
+</html>
