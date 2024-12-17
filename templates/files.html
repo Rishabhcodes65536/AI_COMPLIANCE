@@ -361,8 +361,7 @@ function addAIMessage(message) {
         checkboxes.forEach(cb => cb.checked = selectAll.checked);
     };
 
-    // Function to handle form submission
-function handleSubmission() {
+  function handleSubmission() {
     const selectedFiles = [];
     const formData = new FormData();
 
@@ -392,8 +391,14 @@ function handleSubmission() {
     // Add user's message bubble
     addUserMessage(userQuestion);
 
-    // Append selected files and question to FormData
-    selectedFiles.forEach(file => formData.append('files', file)); // Append actual File objects
+    // File size check (example: 50MB limit)
+    for (let file of selectedFiles) {
+        if (file.size > 50 * 1024 * 1024) {  // 50MB size limit
+            alert("File size exceeds the limit of 50MB");
+            return;
+        }
+        formData.append('files', file); // Append actual File objects
+    }
     formData.append('question', userQuestion);
 
     // API call
@@ -403,28 +408,26 @@ function handleSubmission() {
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to submit files');
+                return response.json().then(err => {
+                    throw new Error(`Failed to submit files: ${err.message || err}`);
+                });
             }
             return response.json(); // Assuming the API response is in JSON format
         })
         .then(data => {
             console.log("AI Response:", data);
-
-            // Add AI's response bubble
-            addAIMessage(data.response);
+            addAIMessage(data.response);  // Add AI's response bubble
+            chatInput.value = '';  // Clear input after successful response
         })
         .catch(error => {
             console.error('Error:', error);
-
             // Add error message bubble
             const errorBubble = document.createElement('div');
             errorBubble.className = 'bg-red-600 text-white p-2 rounded-lg self-start max-w-xs mb-2';
-            errorBubble.textContent = 'There was an error processing your request. Please try again.';
+            errorBubble.textContent = 'There was an error processing your request. Please try again.' + error;
             chatArea.appendChild(errorBubble);
             chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the latest message
         });
-
-         chatInput.value = '';
 }
 
 // Attach event listeners

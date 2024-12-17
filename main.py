@@ -323,7 +323,7 @@ def allowed_file(filename):
 # Route for homepage
 @app.route('/files')
 def index():
-    return render_template('files.html')
+    return render_template('file_upload.html')
 
 
 # Combine text with file titles for indexing
