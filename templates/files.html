@@ -301,12 +301,12 @@ function addUserMessage(message) {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// Add an AI message bubble
+// Add an AI message bubble with formatting
 function addAIMessage(message) {
     const chatArea = document.getElementById('chatArea');
     const aiBubble = document.createElement('div');
     aiBubble.className = 'chat-bubble ai';
-    aiBubble.textContent = message;
+    aiBubble.innerHTML = message; // Use innerHTML to retain formatting
     chatArea.appendChild(aiBubble);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -361,7 +361,7 @@ function addAIMessage(message) {
         checkboxes.forEach(cb => cb.checked = selectAll.checked);
     };
 
-  function handleSubmission() {
+ function handleSubmission() {
     const selectedFiles = [];
     const formData = new FormData();
 
@@ -380,10 +380,10 @@ function addAIMessage(message) {
         return;
     }
 
-    if (selectedFiles.length === 0) {
-        alert('Please select at least one file.');
-        return;
-    }
+    // if (selectedFiles.length === 0) {
+    //     alert('Please select at least one file.');
+    //     return;
+    // }
 
     console.log("Submitting files to API:", selectedFiles);
     console.log("User question:", userQuestion);
@@ -416,7 +416,13 @@ function addAIMessage(message) {
         })
         .then(data => {
             console.log("AI Response:", data);
-            addAIMessage(data.response);  // Add AI's response bubble
+
+            // Add AI's response bubble with formatted content
+            if (data.response) {
+                addAIMessage(data.response.replace(/\n/g, '<br>')); // Replace line breaks for HTML rendering
+            } else {
+                addAIMessage("No response text received.");
+            }
             chatInput.value = '';  // Clear input after successful response
         })
         .catch(error => {

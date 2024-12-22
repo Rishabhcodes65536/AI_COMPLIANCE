@@ -10,6 +10,7 @@ import logging
 import PyPDF2
 from docx import Document
 
+
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
@@ -59,47 +60,6 @@ last_known_hash = None
 
 
 
-def send_to_api(query, user, files=None, conversation_id="", response_mode="blocking"):
-    """
-    Send a request to the external API with the given parameters.
-
-    Args:
-        query (str): The question or query to send.
-        user (str): The user identifier.
-        files (list): List of file paths (optional).
-        conversation_id (str): Conversation ID for context (default is "").
-        response_mode (str): The response mode (default is "blocking").
-
-    Returns:
-        dict: The JSON response from the API, or an error message if the request fails.
-    """
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json'
-    }
-    final_query="You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "+ query
-    # Construct the payload
-    app.logger.info(final_query)
-    data = {
-        "inputs": {},
-        "query": final_query,
-        "response_mode": response_mode,
-        "conversation_id": conversation_id,
-        "user": user,
-        "files": files if files else []
-    }
-
-    try:
-        response = requests.post(API_URL, headers=headers, json=data)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"API Request failed: {e}")
-        return {"error": f"API Request failed: {str(e)}"}
-    except ValueError as e:
-        logging.error(f"Failed to decode JSON response: {e}")
-        return {"error": "Failed to decode JSON response"}
-
 
 def fetch_webpage_content(url):
     """
@@ -126,28 +86,41 @@ def fetch_webpage_content(url):
         return None, None
 
 
-def get_answer(question):
+def get_answer(question,content):
     """
     Send a question to the external API and retrieve the answer.
     """
     headers = {
-        'Authorization': f'Bearer {API_KEY}',
+        'Authorization': f'Bearer app-G2VCBPrxr5iWvKOHlL9jxwBt',
         'Content-Type': 'application/json'
     }
+    # question=question[:3000]
+
+     # Define a safety limit for input length (approximately 3.5k tokens)
+    max_length = 12000  # This assumes ~3.5k tokens is ~12,000 characters; adjust as needed.
+
+    # Truncate the input question based on character length
+    if len(content) > max_length:
+        content = content[:max_length]
+        app.logger.info(f"Input question truncated to {max_length} characters.")
+
+    app.logger.info("\nQuestion is ",question)
+    app.logger.info("\nContent is ",content)
+    
 
     data = {
-        "inputs": {},
-        "query": question,
+        "inputs": {"content":content,"combined_content":question+"\n"+content},
+        "query":question,
         "response_mode": "blocking",
         "conversation_id": "",
         "user": "sanyam",
-        "files": []
+        "files": [],
     }
 
     try:
         response = requests.post(API_URL, headers=headers, json=data)
         app.logger.info("Request sent to the external API.")
-
+        app.logger.info(response.json())
         if response.status_code == 200:
             response_data = response.json()
             return response_data.get('answer', 'No answer received')
@@ -340,7 +313,7 @@ def extract_text_from_file(file):
         raise ValueError("Unsupported file format. Only PDF and DOCX are allowed.")
     
     # Add title delimiter for indexing
-    return f"---Title: {file.filename}---\n{text}"
+    return f"<title>{file.filename}</title>\n<file_content>\n{text}\n</file_content>"
 
 
 @app.route('/upload', methods=['POST'])
@@ -349,24 +322,30 @@ def upload_files():
     Endpoint for uploading files, extracting text, and interacting with LLM.
     """
     uploaded_files = request.files.getlist("files")
-    combined_text = "You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "
+    # system_call = "You are a helpful compliance agent who is suppose to answer user query"
 
+    # Add user question 
+
+    # we are appending it first so it does not get truncated
+    user_question = request.form.get("question", "")
+    user_query = f"/n <user_question> {user_question} /n </user_question>"
     # Extract text from uploaded files
+    file_content=""
     for file in uploaded_files:
         try:
             extracted_text = extract_text_from_file(file)
-            combined_text += f"\n---File Separator---\n{extracted_text}"
+            file_content += f"\n <file_separator>\n{extracted_text} </file_separator>"
         except Exception as e:
             return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
 
-    # Add user question
-    user_question = request.form.get("question", "")
-    combined_text += f"\n---User Question---\n{user_question}"
+    # combined_text=combined_text[]
 
-    app.logger.info(combined_text)
+    # truncated_text=combined_text[:3000]
+    # app.logger.info(truncated_text)
+    # app.logger.info(combined_text)
     # Send combined text to the LLM
     try:
-        response = get_answer(combined_text)  # Replace with your actual LLM function
+        response = get_answer(user_query,file_content)  # Replace with your actual LLM function
     except Exception as e:
         return jsonify({"error": f"Failed to interact with LLM: {str(e)}"}), 500
 
@@ -384,3 +363,47 @@ def delete_file(filename):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+def send_to_api(query, user, files=None, conversation_id="", response_mode="blocking"):
+    """
+    Send a request to the external API with the given parameters.
+
+    Args:
+        query (str): The question or query to send.
+        user (str): The user identifier.
+        files (list): List of file paths (optional).
+        conversation_id (str): Conversation ID for context (default is "").
+        response_mode (str): The response mode (default is "blocking").
+
+    Returns:
+        dict: The JSON response from the API, or an error message if the request fails.
+    """
+    headers = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    final_query="You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "+ query
+    # Construct the payload
+    app.logger.info(final_query)
+    data = {
+        "inputs": {},
+        "query": final_query,
+        "response_mode": response_mode,
+        "conversation_id": conversation_id,
+        "user": user,
+        "files": files if files else []
+    }
+
+    try:
+        response = requests.post(API_URL, headers=headers, json=data)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"API Request failed: {e}")
+        return {"error": f"API Request failed: {str(e)}"}
+    except ValueError as e:
+        logging.error(f"Failed to decode JSON response: {e}")
+        return {"error": "Failed to decode JSON response"}

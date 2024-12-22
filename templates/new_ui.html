@@ -11,6 +11,17 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <style>
+
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+        overflow-x: scroll;
+        scroll-behavior: smooth;
+    }
         .btn-custom {
             background-color: #4A90E2;
             color: #fff;
@@ -56,32 +67,205 @@
     visibility: hidden;
 }
 
+
+   /* Dark Mode Styles */
+        .dark .bg-light-custom {
+            background: #1A202C;
+        }
+
+        .dark .text-gray-800 {
+            color: #E2E8F0;
+        }
+
+        .dark .text-gray-600 {
+            color: #A0AEC0;
+        }
+
+        .dark .bg-white {
+            background-color: #2D3748;
+        }
+
+        .dark .shadow-lg {
+            box-shadow: none;
+        }
+
+        .dark .btn-custom {
+            background-color: #2B6CB0;
+        }
+
+        .dark .btn-custom:hover {
+            background-color: #2C5282;
+        }
+
     </style>
 </head>
 
-<body class="font-roboto bg-light-custom text-gray-800">
+<body class="font-roboto bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
     <!-- Header Section -->
-    <header class="flex justify-between items-center px-8 py-5 bg-white shadow-lg">
-        <div class="flex items-center">
-            <img src="{{ url_for('static', filename='min_ai_logo.jpg') }}" alt="MinnAI Logo" class="h-10 w-10 mr-3">
-            <span class="text-xl font-bold text-gradient">MinnAI</span>
+    <header class="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md dark:shadow-xl transition-colors duration-300">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <img 
+                src="{{ url_for('static', filename='min_ai_logo.jpg') }}" 
+                alt="MinnAI Logo" 
+                class="h-10 w-10 rounded-full object-cover"
+            >
+            <span class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 dark:from-blue-400 dark:to-green-400">
+                MinnAI
+            </span>
         </div>
-        <nav>
+
+        <nav class="flex items-center space-x-4">
+            {# Theme Toggle #}
+            <button 
+                id="theme-toggle" 
+                class="
+                    p-2 
+                    rounded-full 
+                    bg-gray-100 
+                    dark:bg-gray-700 
+                    hover:bg-gray-200 
+                    dark:hover:bg-gray-600 
+                    transition-colors 
+                    duration-300 
+                    focus:outline-none 
+                    
+                "
+            >
+                <i 
+                    id="theme-icon" 
+                    class="
+                        fas 
+                        text-gray-700 
+                        dark:text-gray-300 
+                        transition-colors 
+                        duration-300
+                        fa-moon
+                    "
+                ></i>
+            </button>
+
+            {# User Authentication #}
             {% if user %}
-            <div class="dropdown">
-                <a href="#" class="text-gray-800 text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-                    Welcome, {{ user['name'] }}
-                </a>
-                <ul class="dropdown-menu bg-gray-800 text-white">
-                    <li><a href="/dashboard" class="dropdown-item text-white">Dashboard</a></li>
-                    <li><a href="/logout" class="dropdown-item text-white">Logout</a></li>
-                </ul>
-            </div>
+                <div class="relative group">
+                    <button 
+                        id="userDropdown" 
+                        class="
+                            flex 
+                            items-center 
+                            space-x-2 
+                            bg-blue-50 
+                            dark:bg-blue-900 
+                            text-blue-600 
+                            dark:text-blue-300 
+                            px-4 
+                            py-2 
+                            rounded-full 
+                            hover:bg-blue-100 
+                            dark:hover:bg-blue-800 
+                            transition-colors 
+                            duration-300
+                        "
+                    >
+                        <img 
+                            src="{{ user['avatar'] }}" 
+                            alt="{{ user['name'] }}" 
+                            class="h-8 w-8 rounded-full"
+                        >
+                        <span class="font-medium">{{ user['name'] }}</span>
+                        <svg 
+                            class="w-4 h-4 ml-1" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                        >
+                            <path 
+                                fill-rule="evenodd" 
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" 
+                                clip-rule="evenodd" 
+                            />
+                        </svg>
+                    </button>
+
+                    <div 
+                        class="
+                            absolute 
+                            right-0 
+                            top-full 
+                            mt-2 
+                            w-48 
+                            bg-white 
+                            dark:bg-gray-800 
+                            rounded-lg 
+                            shadow-lg 
+                            dark:shadow-xl 
+                            hidden 
+                            group-hover:block 
+                            transition-all 
+                            duration-300
+                        "
+                    >
+                        <a 
+                            href="/dashboard" 
+                            class="
+                                block 
+                                px-4 
+                                py-2 
+                                text-gray-700 
+                                dark:text-gray-300 
+                                hover:bg-gray-100 
+                                dark:hover:bg-gray-700 
+                                transition-colors 
+                                duration-300
+                            "
+                        >
+                            Dashboard
+                        </a>
+                        <a 
+                            href="/logout" 
+                            class="
+                                block 
+                                px-4 
+                                py-2 
+                                text-red-600 
+                                dark:text-red-400 
+                                hover:bg-gray-100 
+                                dark:hover:bg-gray-700 
+                                transition-colors 
+                                duration-300
+                            "
+                        >
+                            Logout
+                        </a>
+                    </div>
+                </div>
             {% else %}
-            <a href="/login" class="btn btn-custom">Sign in with Google</a>
+                <a 
+                    href="/login" 
+                    class="
+                        px-6 
+                        py-2 
+                        bg-blue-500 
+                        text-white 
+                        rounded-full 
+                        hover:bg-blue-600 
+                        dark:bg-blue-600 
+                        dark:hover:bg-blue-700 
+                        transition-colors 
+                        duration-300 
+                        shadow-md 
+                        hover:shadow-lg 
+                        flex 
+                        items-center 
+                        space-x-2
+                    "
+                >
+                    <i class="fab fa-google mr-2"></i>
+                    Sign in with Google
+                </a>
             {% endif %}
         </nav>
-    </header>
+    </div>
+</header>
 
     <!-- Hero Section -->
     <section class="text-center py-20" data-aos="fade-up">
@@ -99,7 +283,7 @@
         </a>
     </section>
 
-    <!-- Next Section: How It Works -->
+    <!-- Next Section: Why choose -->
     <section class="container mx-auto px-6 py-16" data-aos="fade-right">
         <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">
             Why Chose Minn-Ai
@@ -137,12 +321,12 @@
             </div>
         </div>
     </section>
-<section class="py-16 bg-gradient-to-r from-gray-50 to-white" data-aos="fade-up">
+<section class="py-16 bg-gradient-to-r from-gray-50 to-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900" data-aos="fade-up">
     <div class="container mx-auto px-6">
         <!-- Section Title -->
         <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">What Minn-AI Does</h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">What Minn-AI Does</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                 Minn-AI simplifies compliance management by scanning documents for required changes and monitoring official regulations for the latest updates.
             </p>
         </div>
@@ -150,36 +334,36 @@
         <div class="space-y-16">
             <!-- Block 1 -->
             <div class="flex flex-col md:flex-row items-center md:items-start" data-aos="fade-left" data-aos-delay="100">
-                <div class="flex-shrink-0 w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
-                    <i class="fas fa-file-alt text-blue-600 text-4xl"></i>
+                <div class="flex-shrink-0 w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
+                    <i class="fas fa-file-alt text-blue-600 dark:text-blue-300 text-4xl"></i>
                 </div>
                 <div class="mt-6 md:mt-0 md:ml-8 md:w-3/4">
-                    <h3 class="text-2xl font-semibold text-gray-800">Document Compliance Scanning</h3>
-                    <p class="text-gray-600 mt-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Document Compliance Scanning</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
                         Minn-AI intelligently scans your documents to identify non-compliant sections, suggesting necessary updates to align with legal requirements.
                     </p>
                 </div>
             </div>
             <!-- Block 2 -->
             <div class="flex flex-col md:flex-row-reverse items-center md:items-start" data-aos="fade-right" data-aos-delay="200">
-                <div class="flex-shrink-0 w-20 h-20 bg-green-100 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
-                    <i class="fas fa-bell text-green-600 text-4xl"></i>
+                <div class="flex-shrink-0 w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
+                    <i class="fas fa-bell text-green-600 dark:text-green-300 text-4xl"></i>
                 </div>
                 <div class="mt-6 md:mt-0 md:mr-8 md:w-3/4">
-                    <h3 class="text-2xl font-semibold text-gray-800">Real-Time Law Monitoring</h3>
-                    <p class="text-gray-600 mt-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Real-Time Law Monitoring</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
                         Automatically tracks updates to statutes and regulations from official sources, ensuring you remain compliant without extra effort.
                     </p>
                 </div>
             </div>
             <!-- Block 3 -->
             <div class="flex flex-col md:flex-row items-center md:items-start" data-aos="fade-left" data-aos-delay="300">
-                <div class="flex-shrink-0 w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
-                    <i class="fas fa-sync-alt text-yellow-600 text-4xl"></i>
+                <div class="flex-shrink-0 w-20 h-20 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center shadow-lg mx-auto md:mx-0">
+                    <i class="fas fa-sync-alt text-yellow-600 dark:text-yellow-300 text-4xl"></i>
                 </div>
                 <div class="mt-6 md:mt-0 md:ml-8 md:w-3/4">
-                    <h3 class="text-2xl font-semibold text-gray-800">Continuous Updates</h3>
-                    <p class="text-gray-600 mt-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Continuous Updates</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
                         Get notified about changes to compliance standards and laws in real-time, allowing you to stay ahead without manual intervention.
                     </p>
                 </div>
@@ -187,45 +371,44 @@
         </div>
     </div>
 </section>
-
 <!-- How MinnAI Works Section -->
-<section class="py-16 bg-white" data-aos="fade-up">
+<section class="py-16 bg-gray-50 dark:bg-gray-900" data-aos="fade-up">
     <div class="container mx-auto px-6 relative">
-        <h2 class="text-3xl font-bold text-gray-800 text-center mb-12">How MinnAI Works</h2>
+        <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-200 text-center mb-12">How MinnAI Works</h2>
 
         <!-- Central Line -->
-        <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-300"></div>
+        <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-200 dark:bg-gray-700"></div>
 
         <!-- Step 1 -->
-        <div class="relative flex items-center mb-16">
-            <div class="w-1/2 pr-8 flex justify-end">
-                <div class="bg-blue-50 rounded-lg p-6 shadow-md transform hover:scale-105 transition duration-300 ease-in-out">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 1: Upload Your Data</h3>
-                    <p class="text-gray-600">
+        <div class="relative flex flex-wrap items-center mb-16">
+            <div class="w-full md:w-1/2 pr-8 flex justify-end">
+                <div class="bg-blue-100 dark:bg-blue-900 rounded-lg p-6 shadow-lg transform hover:scale-105 transition duration-300">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 1: Upload Your Data</h3>
+                    <p class="text-gray-700 dark:text-gray-400">
                         Start by securely uploading your datasets to MinnAI's encrypted platform.
                     </p>
                 </div>
             </div>
-            <div class="w-1/2 flex justify-center items-center relative">
-                <div class="absolute -left-6 h-2 w-12 bg-blue-500"></div>
-                <div class="flex justify-center items-center h-16 w-16 bg-blue-100 rounded-full">
-                    <i class="fas fa-cloud-upload-alt text-blue-600 text-3xl"></i>
+            <div class="w-full md:w-1/2 flex justify-center items-center relative">
+                <div class="absolute -left-6 h-2 w-12 bg-blue-500 dark:bg-blue-700"></div>
+                <div class="flex justify-center items-center h-16 w-16 bg-blue-200 dark:bg-blue-800 rounded-full">
+                    <i class="fas fa-cloud-upload-alt text-blue-600 dark:text-blue-300 text-3xl"></i>
                 </div>
             </div>
         </div>
 
         <!-- Step 2 -->
-        <div class="relative flex items-center mb-16">
-            <div class="w-1/2 flex justify-center items-center relative">
-                <div class="absolute -right-6 h-2 w-12 bg-green-500"></div>
-                <div class="flex justify-center items-center h-16 w-16 bg-green-100 rounded-full">
-                    <i class="fas fa-brain text-green-600 text-3xl"></i>
+        <div class="relative flex flex-wrap items-center mb-16">
+            <div class="w-full md:w-1/2 flex justify-center items-center relative">
+                <div class="absolute -right-6 h-2 w-12 bg-green-500 dark:bg-green-700"></div>
+                <div class="flex justify-center items-center h-16 w-16 bg-green-200 dark:bg-green-800 rounded-full">
+                    <i class="fas fa-brain text-green-600 dark:text-green-300 text-3xl"></i>
                 </div>
             </div>
-            <div class="w-1/2 pl-8 flex justify-start">
-                <div class="bg-green-50 rounded-lg p-6 shadow-md transform hover:scale-105 transition duration-300 ease-in-out">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 2: AI-Powered Analysis</h3>
-                    <p class="text-gray-600">
+            <div class="w-full md:w-1/2 pl-8 flex justify-start">
+                <div class="bg-green-100 dark:bg-green-900 rounded-lg p-6 shadow-lg transform hover:scale-105 transition duration-300">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 2: AI-Powered Analysis</h3>
+                    <p class="text-gray-700 dark:text-gray-400">
                         Our algorithms analyze and extract actionable insights, ensuring compliance with AI regulations.
                     </p>
                 </div>
@@ -233,45 +416,78 @@
         </div>
 
         <!-- Step 3 -->
-        <div class="relative flex items-center">
-            <div class="w-1/2 pr-8 flex justify-end">
-                <div class="bg-yellow-50 rounded-lg p-6 shadow-md transform hover:scale-105 transition duration-300 ease-in-out">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 3: Track & Optimize</h3>
-                    <p class="text-gray-600">
+        <div class="relative flex flex-wrap items-center">
+            <div class="w-full md:w-1/2 pr-8 flex justify-end">
+                <div class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-6 shadow-lg transform hover:scale-105 transition duration-300">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 3: Track & Optimize</h3>
+                    <p class="text-gray-700 dark:text-gray-400">
                         Access intuitive dashboards to monitor progress and optimize compliance strategies.
                     </p>
                 </div>
             </div>
-            <div class="w-1/2 flex justify-center items-center relative">
-                <div class="absolute -left-6 h-2 w-12 bg-yellow-500"></div>
-                <div class="flex justify-center items-center h-16 w-16 bg-yellow-100 rounded-full">
-                    <i class="fas fa-chart-line text-yellow-600 text-3xl"></i>
+            <div class="w-full md:w-1/2 flex justify-center items-center relative">
+                <div class="absolute -left-6 h-2 w-12 bg-yellow-500 dark:bg-yellow-700"></div>
+                <div class="flex justify-center items-center h-16 w-16 bg-yellow-200 dark:bg-yellow-800 rounded-full">
+                    <i class="fas fa-chart-line text-yellow-600 dark:text-yellow-300 text-3xl"></i>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
-<section class="form-section text-center py-16 bg-gradient-to-b from-gray-50 to-white" data-aos="fade-up">
+<section class="form-section text-center py-16 bg-gradient-to-b from-gray-50 to-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-gray-900" data-aos="fade-up">
     <div class="container mx-auto px-6">
         <!-- Title -->
-        <h2 class="text-4xl font-bold text-gray-800 mb-4" data-aos="flip-up">Monitor Statutes Updates</h2>
-        <p class="text-lg text-gray-600 mb-8" data-aos="zoom-in-up">
+        <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4" data-aos="flip-up">
+            Monitor Statutes Updates
+        </h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400 mb-8" data-aos="zoom-in-up">
             Stay informed! Click the button below to check for updates in Minnesota-245d regulations.
         </p>
         
-        <!-- Button -->
-        <button id="checkUpdateBtn" class="btn btn-custom px-8 py-3 rounded-lg text-lg font-semibold" data-aos="fade-up">
+        <!-- Button (Google-inspired design) -->
+        <button 
+            id="checkUpdateBtn" 
+            class="
+                px-8 py-3 rounded-lg text-lg font-semibold 
+                bg-blue-500 text-white 
+                hover:bg-blue-600 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+                transition duration-300 ease-in-out
+                dark:bg-blue-600 dark:hover:bg-blue-700
+                dark:focus:ring-blue-400
+                transform hover:-translate-y-1 hover:shadow-lg
+            " 
+            data-aos="fade-up"
+        >
             Check for Updates
         </button>
         
         <!-- Loading Indicator -->
-        <div id="loading" class="mt-6 text-yellow-500 font-medium hidden animate-pulse">
+        <div 
+            id="loading" 
+            class="
+                mt-6 
+                text-yellow-600 
+                dark:text-yellow-400 
+                font-medium 
+                hidden 
+                animate-pulse
+            "
+        >
             Checking for updates, please wait...
         </div>
         
         <!-- Result -->
-        <div id="result" class="mt-4 text-lg font-semibold"></div>
+        <div 
+            id="result" 
+            class="
+                mt-4 
+                text-lg 
+                font-semibold 
+                text-gray-800 
+                dark:text-gray-200
+            "
+        ></div>
     </div>
 </section>
 
@@ -308,79 +524,308 @@
     });
 </script>
 
-
-<!-- Testimonials Section -->
-<section class="py-16 bg-gray-100" data-aos="fade-up">
+<section class="py-16 bg-gray-100 dark:bg-gray-900" data-aos="fade-up">
     <div class="container mx-auto px-6">
-        <h2 class="text-3xl font-bold text-gray-800 text-center mb-12">What Our Users Are Saying</h2>
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-200 text-center mb-12">
+            What Our Users Are Saying
+        </h2>
 
         <!-- Testimonial Carousel -->
         <div class="testimonial-carousel relative">
-            <div class="flex overflow-hidden space-x-6 auto-scroll">
+            <div class="flex overflow-x-scroll space-x-6 pb-8 scrollbar-hide">
                 <!-- Testimonial 1 -->
-                <div class="testimonial-item w-80 h-64 bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition duration-300 ease-in-out">
-                    <div class="flex items-center mb-4">
-                        <img src="https://robohash.org/user1" alt="User 1" class="w-16 h-16 rounded-full object-cover mr-4">
-                        <div>
-                            <h3 class="font-semibold text-gray-800">John Doe</h3>
-                            <p class="text-sm text-gray-500">Product Manager</p>
+                <div class="testimonial-item 
+                    w-80 
+                    flex-shrink-0 
+                    bg-white 
+                    dark:bg-gray-800 
+                    rounded-xl 
+                    shadow-lg 
+                    hover:shadow-2xl 
+                    transition-all 
+                    duration-300 
+                    ease-in-out 
+                    transform 
+                    hover:-translate-y-2 
+                    border 
+                    border-gray-100 
+                    dark:border-gray-700
+                    p-6
+                ">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="mb-4 flex items-center">
+                            <img 
+                                src="https://robohash.org/user1" 
+                                alt="User 1" 
+                                class="
+                                    w-16 
+                                    h-16 
+                                    rounded-full 
+                                    object-cover 
+                                    mr-4 
+                                    border-2 
+                                    border-blue-50 
+                                    dark:border-blue-900
+                                "
+                            >
+                            <div>
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-200">John Doe</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Product Manager</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 italic">
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 mr-2">"</span>
+                            MinnAI has been a game-changer for our project. The AI-driven analysis saved us so much time!
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 ml-2">"</span>
+                        </p>
+                        <div class="mt-4 flex space-x-1">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2 ```html
+                    .8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
                         </div>
                     </div>
-                    <p class="text-gray-600">"MinnAI has been a game-changer for our project. The AI-driven analysis saved us so much time!"</p>
                 </div>
 
                 <!-- Testimonial 2 -->
-                <div class="testimonial-item w-80 h-64 bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition duration-300 ease-in-out">
-                    <div class="flex items-center mb-4">
-                        <img src="https://robohash.org/user2" alt="User 2" class="w-16 h-16 rounded-full object-cover mr-4">
-                        <div>
-                            <h3 class="font-semibold text-gray-800">Jane Smith</h3>
-                            <p class="text-sm text-gray-500">Data Scientist</p>
+                <div class="testimonial-item 
+                    w-80 
+                    flex-shrink-0 
+                    bg-white 
+                    dark:bg-gray-800 
+                    rounded-xl 
+                    shadow-lg 
+                    hover:shadow-2xl 
+                    transition-all 
+                    duration-300 
+                    ease-in-out 
+                    transform 
+                    hover:-translate-y-2 
+                    border 
+                    border-gray-100 
+                    dark:border-gray-700
+                    p-6
+                ">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="mb-4 flex items-center">
+                            <img 
+                                src="https://robohash.org/user2" 
+                                alt="User  2" 
+                                class="
+                                    w-16 
+                                    h-16 
+                                    rounded-full 
+                                    object-cover 
+                                    mr-4 
+                                    border-2 
+                                    border-blue-50 
+                                    dark:border-blue-900
+                                "
+                            >
+                            <div>
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-200">Jane Smith</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Data Scientist</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 italic">
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 mr-2">"</span>
+                            The platform's seamless integration and powerful insights are invaluable to our team.
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 ml-2">"</span>
+                        </p>
+                        <div class="mt-4 flex space-x-1">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-. 38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
                         </div>
                     </div>
-                    <p class="text-gray-600">"The platform's seamless integration and powerful insights are invaluable to our team."</p>
                 </div>
 
                 <!-- Testimonial 3 -->
-                <div class="testimonial-item w-80 h-64 bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition duration-300 ease-in-out">
-                    <div class="flex items-center mb-4">
-                        <img src="https://robohash.org/user3" alt="User 3" class="w-16 h-16 rounded-full object-cover mr-4">
-                        <div>
-                            <h3 class="font-semibold text-gray-800">Emily Brown</h3>
-                            <p class="text-sm text-gray-500">Marketing Specialist</p>
+                <div class="testimonial-item 
+                    w-80 
+                    flex-shrink-0 
+                    bg-white 
+                    dark:bg-gray-800 
+                    rounded-xl 
+                    shadow-lg 
+                    hover:shadow-2xl 
+                    transition-all 
+                    duration-300 
+                    ease-in-out 
+                    transform 
+                    hover:-translate-y-2 
+                    border 
+                    border-gray-100 
+                    dark:border-gray-700
+                    p-6
+                ">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="mb-4 flex items-center">
+                            <img 
+                                src="https://robohash.org/user3" 
+                                alt="User  3" 
+                                class="
+                                    w-16 
+                                    h-16 
+                                    rounded-full 
+                                    object-cover 
+                                    mr-4 
+                                    border-2 
+                                    border-blue-50 
+                                    dark:border-blue-900
+                                "
+                            >
+                            <div>
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-200">Emily Brown</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Marketing Specialist</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 italic">
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 mr-2">"</span>
+                            I love the intuitive interface and how it makes data analysis so much easier.
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 ml-2">"</span>
+                        </p>
+                        <div class="mt-4 flex space-x-1">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
                         </div>
                     </div>
-                    <p class="text-gray-600">"I love the intuitive interface and how it makes data analysis so much easier."</p>
                 </div>
 
-                <!-- Testimonial 4 -->
-                <div class="testimonial-item w-80 h-64 bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition duration-300 ease-in-out">
-                    <div class="flex items-center mb-4">
-                        <img src="https://robohash.org/user4" alt="User 4" class="w-16 h-16 rounded-full object-cover mr-4">
-                        <div>
-                            <h3 class="font-semibold text-gray-800">David Lee</h3>
-                            <p class="text-sm text-gray-500">CTO</p>
+                  <!-- Testimonial 3 -->
+                <div class="testimonial-item 
+                    w-80 
+                    flex-shrink-0 
+                    bg-white 
+                    dark:bg-gray-800 
+                    rounded-xl 
+                    shadow-lg 
+                    hover:shadow-2xl 
+                    transition-all 
+                    duration-300 
+                    ease-in-out 
+                    transform 
+                    hover:-translate-y-2 
+                    border 
+                    border-gray-100 
+                    dark:border-gray-700
+                    p-6
+                ">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="mb-4 flex items-center">
+                            <img 
+                                src="https://robohash.org/user3" 
+                                alt="User  3" 
+                                class="
+                                    w-16 
+                                    h-16 
+                                    rounded-full 
+                                    object-cover 
+                                    mr-4 
+                                    border-2 
+                                    border-blue-50 
+                                    dark:border-blue-900
+                                "
+                            >
+                            <div>
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-200">Emily Brown</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Marketing Specialist</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 italic">
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 mr-2">"</span>
+                            I love the intuitive interface and how it makes data analysis so much easier.
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 ml-2">"</span>
+                        </p>
+                        <div class="mt-4 flex space-x-1">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
                         </div>
                     </div>
-                    <p class="text-gray-600">"The AI-powered tools have significantly improved our decision-making process."</p>
                 </div>
 
-                <!-- Testimonial 5 -->
-                <div class="testimonial-item w-80 h-64 bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition duration-300 ease-in-out">
-                    <div class="flex items-center mb-4">
-                        <img src="https://robohash.org/user5" alt="User 5" class="w-16 h-16 rounded-full object-cover mr-4">
-                        <div>
-                            <h3 class="font-semibold text-gray-800">Sophia Martinez</h3>
-                            <p class="text-sm text-gray-500">Lead Engineer</p>
+                  <!-- Testimonial 3 -->
+                <div class="testimonial-item 
+                    w-80 
+                    flex-shrink-0 
+                    bg-white 
+                    dark:bg-gray-800 
+                    rounded-xl 
+                    shadow-lg 
+                    hover:shadow-2xl 
+                    transition-all 
+                    duration-300 
+                    ease-in-out 
+                    transform 
+                    hover:-translate-y-2 
+                    border 
+                    border-gray-100 
+                    dark:border-gray-700
+                    p-6
+                ">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="mb-4 flex items-center">
+                            <img 
+                                src="https://robohash.org/user3" 
+                                alt="User  3" 
+                                class="
+                                    w-16 
+                                    h-16 
+                                    rounded-full 
+                                    object-cover 
+                                    mr-4 
+                                    border-2 
+                                    border-blue-50 
+                                    dark:border-blue-900
+                                "
+                            >
+                            <div>
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-200">Emily Brown</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Marketing Specialist</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300 italic">
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 mr-2">"</span>
+                            I love the intuitive interface and how it makes data analysis so much easier.
+                            <span class="text-4xl text-blue-400 dark:text-blue-500 ml-2">"</span>
+                        </p>
+                        <div class="mt-4 flex space-x-1">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
                         </div>
                     </div>
-                    <p class="text-gray-600">"MinnAI's ability to adapt to our needs and deliver precise insights is unmatched."</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
 <!-- Scroll-to-Top Button -->
 <div id="scrollToTop" class="scroll-to-top hidden fixed bottom-6 right-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 rounded-full shadow-lg p-4 cursor-pointer" data-aos="fade-in">
     <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" stroke-width="2" stroke="white" class="h-6 w-6">
@@ -388,30 +833,109 @@
     </svg>
 </div>
 
-<!-- Add AOS Animation -->
 <script>
-    AOS.init({
-        duration: 1200, // Adjust the duration for better scroll animation
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = document.querySelector('.testimonial-carousel .flex');
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+        let isAutoScrolling = true;
+        let autoScrollInterval;
 
-    // JavaScript for automatic scrolling
-    const carousel = document.querySelector('.testimonial-carousel .flex');
-    let scrollAmount = 0;
+        // Smooth scroll function
+        function smoothScroll() {
+            if (!isAutoScrolling) return;
 
-    setInterval(() => {
-        scrollAmount += 1;
-        carousel.style.transform = `translateX(-${scrollAmount}px)`;
-
-        // Reset scrolling when reaching the end of the carousel
-        if (scrollAmount >= carousel.scrollWidth / 2) {
-            scrollAmount = 0;
-            carousel.style.transition = 'none'; // Reset transition for seamless loop
-            carousel.style.transform = 'translateX(0)';
-        } else {
-            carousel.style.transition = 'transform 0.3s ease-in-out'; // Smooth scrolling
+            const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth;
+            
+            // If we've reached the end, reset to the beginning
+            if (carousel.scrollLeft >= maxScrollLeft) {
+                carousel.scrollLeft = 0;
+            } else {
+                // Smooth scroll by one card width
+                const cardWidth = carousel.querySelector('.testimonial-item').offsetWidth;
+                carousel.scrollBy({
+                    left: cardWidth + 24, // Include margin
+                    behavior: 'smooth'
+                });
+            }
         }
-    }, 50); // Adjust scrolling speed here
+
+        // Start auto-scrolling
+        function startAutoScroll() {
+            isAutoScrolling = true;
+            autoScrollInterval = setInterval(smoothScroll, 3000); // Scroll every 3 seconds
+        }
+
+        // Stop auto-scrolling
+        function stopAutoScroll() {
+            isAutoScrolling = false;
+            clearInterval(autoScrollInterval);
+        }
+
+        // Mouse down event for dragging
+        carousel.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - carousel.offsetLeft;
+            scrollLeft = carousel.scrollLeft;
+            stopAutoScroll(); // Stop auto-scroll when user starts interacting
+        });
+
+        // Mouse leave event
+        carousel.addEventListener('mouseleave', () => {
+            isDragging = false;
+            startAutoScroll(); // Resume auto-scroll
+        });
+
+        // Mouse up event
+        carousel.addEventListener('mouseup', () => {
+            isDragging = false;
+            startAutoScroll(); // Resume auto-scroll
+        });
+
+        // Mouse move event for dragging
+        carousel.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - carousel.offsetLeft;
+            const walk = (x - startX) * 2; // Multiply by 2 to increase drag sensitivity
+            carousel.scrollLeft = scrollLeft - walk;
+        });
+
+        // Touch events for mobile support
+        carousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].pageX - carousel.offsetLeft;
+            scrollLeft = carousel.scrollLeft;
+            stopAutoScroll();
+        });
+
+        carousel.addEventListener('touchmove', (e) => {
+            const x = e.touches[0].pageX - carousel.offsetLeft;
+            const walk = (x - startX) * 2;
+            carousel.scrollLeft = scrollLeft - walk;
+        });
+
+        carousel.addEventListener('touchend', () => {
+            startAutoScroll();
+        });
+
+        // Accessibility: Pause on focus
+        carousel.addEventListener('focus', stopAutoScroll);
+        carousel.addEventListener('blur', startAutoScroll);
+
+        // Initialize auto-scroll
+        startAutoScroll();
+
+        // AOS Animation with custom duration
+        AOS.init({
+            duration: 1200,
+            once: true,
+            offset: 50
+        });
+    });
 </script>
+
+
 <!-- Call to Action Section -->
 <section class="cta-section py-16 bg-gradient-to-r from-indigo-600 via-purple-500 to-blue-500 text-white" data-aos="fade-up">
     <div class="container mx-auto px-6 text-center">
@@ -452,6 +976,27 @@
     });
 </script>
 
+
+<script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+
+        themeToggle.addEventListener('click', () => {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            } else {
+                htmlElement.classList.add('dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+    </script>
+    <script>
+     tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
 </body>
 
 </html>
