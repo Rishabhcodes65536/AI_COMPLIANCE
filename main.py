@@ -89,48 +89,6 @@ def fetch_webpage_content(url):
         return None, None
 
 
-def get_answer(question,content):
-    """
-    Send a question to the external API and retrieve the answer.
-    """
-    headers = {
-        'Authorization': f'Bearer app-G2VCBPrxr5iWvKOHlL9jxwBt',
-        'Content-Type': 'application/json'
-    }
-
-    max_length = 12000  # This assumes ~3.5k tokens is ~12,000 characters
-
-    if len(content) > max_length:
-        content = content[:max_length]
-        app.logger.info(f"Input question truncated to {max_length} characters.")
-
-    app.logger.info("\nQuestion is ",question)
-    app.logger.info("\nContent is ",content)
-    
-    conversation="last ten conversation"
-    data = {
-        "inputs": {"content":content,"conversation":conversation,"combined_content":question+"\n"+content},
-        "query":question,
-        "response_mode": "blocking",
-        "conversation_id": "",
-        "user": "sanyam",
-        "files": [],
-    }
-
-    try:
-        response = requests.post(API_URL, headers=headers, json=data)
-        app.logger.info("Request sent to the external API.")
-        app.logger.info(response.json())
-        if response.status_code == 200:
-            response_data = response.json()
-            return response_data.get('answer', 'No answer received')
-        else:
-            app.logger.error(f"API error: {response.status_code}")
-            return f"Error: {response.status_code}"
-
-    except requests.exceptions.RequestException as e:
-        app.logger.error(f"Error communicating with the API: {e}")
-        return "An error occurred while fetching the answer."
 
 
 # Routes
@@ -331,6 +289,50 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+def get_answer(question,content,formatted_history):
+    """
+    Send a question to the external API and retrieve the answer.
+    """
+    headers = {
+        'Authorization': f'Bearer app-G2VCBPrxr5iWvKOHlL9jxwBt',
+        'Content-Type': 'application/json'
+    }
+
+    max_length = 12000  # This assumes ~3.5k tokens is ~12,000 characters
+
+    if len(content) > max_length:
+        content = content[:max_length]
+        app.logger.info(f"Input question truncated to {max_length} characters.")
+
+    # app.logger.info("\nQuestion is ",question)
+    # app.logger.info("\nContent is ",content)
+    app.logger.info("\nFormatted history is ",formatted_history)
+    # conversation=formatted_history
+    data = {
+        "inputs": {"content":content,"conversation":formatted_history,"combined_content":question+"\n"+content},
+        "query":question,
+        "response_mode": "blocking",
+        "conversation_id": "",
+        "user": "sanyam",
+        "files": [],
+    }
+
+    try:
+        response = requests.post(API_URL, headers=headers, json=data)
+        app.logger.info("Request sent to the external API.")
+        app.logger.info(response.json())
+        if response.status_code == 200:
+            response_data = response.json()
+            return response_data.get('answer', 'No answer received')
+        else:
+            app.logger.error(f"API error: {response.status_code}")
+            return f"Error: {response.status_code}"
+
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error communicating with the API: {e}")
+        return "An error occurred while fetching the answer."
+    
+
 @app.route('/files')
 def files():
     if 'user' not in session:
@@ -351,6 +353,7 @@ def extract_text_from_file(file):
 
     return f"<title>{file.filename}</title>\n<file_content>\n{text}\n</file_content>"
 
+
 @app.route('/upload', methods=['POST'])
 def upload_files():
     """
@@ -361,9 +364,10 @@ def upload_files():
         uploaded_files = request.files.getlist("files")
         user_question = request.form.get("question", "")
         user_query = f"\n <user_question> {user_question} \n </user_question>"
-        user_id = session.get('user', {}).get('id')  # Ensure the user is logged in
-        
-        if not user_id:
+
+        # Ensure the user is logged in and get the user email from the session
+        user_email = session.get('user', {}).get('email')
+        if not user_email:
             return jsonify({"error": "User not logged in."}), 401
 
         # Extract text from files
@@ -375,41 +379,53 @@ def upload_files():
             except Exception as e:
                 return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
 
-        # Retrieve the past 10 conversations from the database
+        # Retrieve the past 10 conversations from the database by email
         chat_history = chats_collection.find(
-            {"user_id": user_id},  # Using user_id as a string
+            {"email": user_email},  # Using email instead of user_id (now using user_email)
             {"chat_history": {"$slice": -10}}  # Get the last 10 conversations
         ).sort([("timestamp", 1)])  # Sort in ascending order (oldest first)
+
+        # Debugging: Check if chat_history is being fetched correctly
+        app.logger.error(f"Chat history retrieved: {chat_history}")
 
         # Format chat history with appropriate XML separators
         formatted_history = ""
         for chat in chat_history:
-            for entry in chat["chat_history"]:
-                question = entry.get("question", "").strip()
-                response = entry.get("response", "").strip()
-                if question and response:
-                    formatted_history += f"\n<chat>\n  <question>{question}</question>\n  <response>{response}</response>\n</chat>\n"
-        
+            app.logger.info(f"Processing chat: {chat}")  # Debugging line to inspect each chat entry
+            chat_entries = [
+                f"\n<chat>\n  <question>{entry.get('question', '').strip()}</question>\n  <response>{entry.get('response', '').strip()}</response>\n</chat>"
+                for entry in chat.get("chat_history", [])
+                if entry.get("question") and entry.get("response")
+            ]
+            formatted_history += ''.join(chat_entries)  # Join all entries into a single string
+
+        # Debugging: Log the formatted chat history to ensure it's populated
+        app.logger.info(f"Formatted chat history: {formatted_history}")
+
         # Add the formatted chat history to the user query
-        user_query = f"{formatted_history}\n<user_question>{user_question}</user_question>"
+        user_query = f"<user_question>{user_question}</user_question>"
 
         # Interact with LLM
-        response = get_answer(user_query, file_content)
+        response = get_answer(user_query, file_content, formatted_history)
 
         # Log interaction in MongoDB
         for file in uploaded_files:
+            file_name = file.filename if file.filename else "empty"
             chats_collection.update_one(
-                {"user_id": user_id, "file_name": file.filename},  # Using user_id as a string
-                {"$push": {
-                    "chat_history": {
-                        "question": user_question,
-                        "response": response,
-                        "timestamp": datetime.utcnow()
-                    }},
-                 "$setOnInsert": {
-                     "user_id": user_id,  # Using user_id as a string
-                     "file_name": file.filename
-                 }},
+                {"email": user_email, "file_name": file_name},  # Using user_email instead of user_id
+                {
+                    "$push": {
+                        "chat_history": {
+                            "question": user_question,
+                            "response": response,
+                            "timestamp": datetime.utcnow()
+                        }
+                    },
+                    "$setOnInsert": {
+                        "email": user_email,  # Using user_email instead of user_id
+                        "file_name": file_name
+                    }
+                },
                 upsert=True
             )
 
@@ -418,6 +434,7 @@ def upload_files():
     except Exception as e:
         app.logger.error(f"Error in /upload: {e}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 # Route to handle file deletion
 @app.route('/delete/<filename>', methods=['DELETE'])
