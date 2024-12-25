@@ -12,10 +12,10 @@ import PyPDF2
 from functools import wraps
 from docx import Document
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime,timedelta
 from bson import ObjectId
 
-
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 initial_date = datetime(2024, 11, 1)  
@@ -35,7 +35,15 @@ URL = 'https://www.revisor.mn.gov/statutes/cite/245D/full'
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY 
+app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+
 app.logger.setLevel(logging.INFO)
+
+# Add this line to handle proxy headers correctly
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 # MongoDB Setup
@@ -44,6 +52,7 @@ db = client["test"]  # Replace with your database name
 users_collection = db["users"]
 chats_collection = db["chats"]
 
+
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -51,11 +60,10 @@ google = oauth.register(
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
-        'scope': 'openid email profile'
+        'scope': 'openid email profile',
+        'prompt': 'select_account'
     }
 )
-
-
 last_known_hash = None
 
 def fetch_webpage_content(url):
@@ -202,27 +210,41 @@ app.json_encoder = JSONEncoder
 
 @app.route('/login')
 def login():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
+    session.clear()
+    session['oauth_state'] = os.urandom(16).hex()
+    session.modified = True
+    redirect_uri = url_for('google_callback', _external=True)
     return google.authorize_redirect(
-        redirect_uri=url_for('google_callback', _external=True)
+        redirect_uri=redirect_uri,
+        state=session['oauth_state']
     )
 
 @app.route('/google/callback')
 def google_callback():
     try:
-        # Get token and user info from Google
+        state = request.args.get('state')
+        stored_state = session.get('oauth_state')
+        
+        if not state or not stored_state or state != stored_state:
+            raise ValueError("State verification failed")
+        
+        session.pop('oauth_state', None)
+        
+        code = request.args.get('code')
+        if not code:
+            raise ValueError("No authorization code received")
+
         token = google.authorize_access_token()
         if not token:
             raise ValueError("Failed to get access token")
-            
-        resp = google.get('userinfo')
+        
+        # Updated this line to use the full URL
+        resp = google.get('https://www.googleapis.com/oauth2/v3/userinfo', token=token)
         user_info = resp.json()
         
         if not user_info or 'email' not in user_info:
             raise ValueError("Failed to get user info")
 
-        # Prepare user data
         user_data = {
             "name": user_info.get("name", "User"),
             "email": user_info["email"],
@@ -230,24 +252,31 @@ def google_callback():
             "last_login": datetime.utcnow()
         }
 
-        # Update or insert user in MongoDB
-        users_collection.update_one(
+        result = users_collection.update_one(
             {"email": user_data["email"]},
             {"$set": user_data},
             upsert=True
         )
 
-        # Store user info in session
+        session.permanent = True
         session['user'] = user_data
-        return redirect(url_for('files'))
+        session.modified = True
+
+        app.logger.info(f"Successfully authenticated user: {user_data['email']}")
+        return redirect(url_for('dashboard'))
 
     except Exception as e:
         app.logger.error(f"Error in Google callback: {str(e)}")
-        return render_template('error.html', error="Authentication failed. Please try again.")
+        session.clear()
+        return render_template(
+            'error.html', 
+            error="Authentication failed. Please try again.",
+            retry_url=url_for('login')
+        )
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.clear()
     return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
