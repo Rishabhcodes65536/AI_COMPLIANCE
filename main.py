@@ -55,6 +55,7 @@ google = oauth.register(
     client_kwargs={'scope': 'email profile'}
 )
 
+
 last_known_hash = None
 
 def fetch_webpage_content(url):
@@ -183,70 +184,39 @@ def check_update():
         }), 200
     
 
+
+
+# Google OAuth Routes
 @app.route('/login')
 def login():
     """
-    Login endpoint to initiate Google OAuth.
+    Redirect the user to Google's OAuth 2.0 authorization page.
     """
-    redirect_uri = url_for('google_callback', _external=True)
+    # if 'user' in session:
+    #     return redirect(url_for('dashboard'))  # or any logged-in page
+    redirect_uri = url_for('google_callback', _external=True)  # Generates full URL
     return google.authorize_redirect(redirect_uri)
+    # return google.authorize_redirect('http://localhost:5000/google/callback')
 
 
 @app.route('/google/callback')
 def google_callback():
     """
-    Handle Google OAuth callback, log user into the session, and store user in MongoDB.
+    Handle the callback from Google OAuth and fetch the user's profile.
     """
     try:
-        # Step 1: Get the OAuth token
         token = google.authorize_access_token()
-        if not token:
-            app.logger.error("Failed to retrieve OAuth token.")
-            raise ValueError("Failed to retrieve OAuth token.")
-
-        # Step 2: Get user information from Google
         user_info = google.get('userinfo').json()
+
         if not user_info:
-            app.logger.error("Failed to retrieve user information from Google.")
-            raise ValueError("Failed to retrieve user information from Google.")
+            raise ValueError("Failed to fetch user info")  # Handle failure gracefully
 
-        if 'email' not in user_info:
-            app.logger.error(f"Incomplete user information: {user_info}")
-            raise ValueError("Incomplete user information received from Google.")
-
-        # Step 3: Create user session data
-        user = {
-            "name": user_info.get("name", "User"),
-            "email": user_info["email"],
-            "picture": user_info.get("picture", "/static/default-profile.png"),
-        }
-
-        # Step 4: Check if user exists in MongoDB
-        existing_user = users_collection.find_one({"email": user['email']})
-        if not existing_user:
-            user['created_at'] = datetime.utcnow()
-            user['updated_at'] = datetime.utcnow()
-            user_id = users_collection.insert_one(user).inserted_id
-            app.logger.info(f"New user created: {user}")
-        else:
-            user_id = existing_user["_id"]
-            app.logger.info(f"Existing user found: {existing_user}")
-
-        # Step 5: Store user ID as a string in the session
-        user['id'] = str(user_id)
-        session['user'] = user
-        app.logger.debug(f"Session data: {session['user']}")
-
+        session['user'] = user_info
+        app.logger.info(f"User logged in: {user_info}")
         return redirect(url_for('dashboard'))
-
     except Exception as e:
-        app.logger.error(f"Error during Google OAuth callback: {e}")
-        return render_template(
-            'error.html',
-            message="An error occurred during login. Please try again or contact support.",
-            retry_url=url_for('login')
-        )
-
+        app.logger.error(f"Error during Google OAuth: {e}")
+        return redirect(url_for('home'))  # Avoid redirecting to login to break the loop
 
 
 @app.route('/dashboard')
