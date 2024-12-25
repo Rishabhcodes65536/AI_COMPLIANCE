@@ -5,4 +5,4 @@ python-dotenv==1.0.0
 PyPDF2==3.0.0
 python-docx==0.8.11
 pymongo==4.5.0
-bson==0.5.10
+six>=1.16.0

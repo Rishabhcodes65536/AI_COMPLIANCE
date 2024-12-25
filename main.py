@@ -10,7 +10,6 @@ import logging
 import PyPDF2
 from docx import Document
 from pymongo import MongoClient
-from bson import ObjectId
 from datetime import datetime
 
 
@@ -332,7 +331,6 @@ def extract_text_from_file(file):
 
     return f"<title>{file.filename}</title>\n<file_content>\n{text}\n</file_content>"
 
-
 @app.route('/upload', methods=['POST'])
 def upload_files():
     """
@@ -359,7 +357,7 @@ def upload_files():
 
         # Retrieve the past 10 conversations from the database
         chat_history = chats_collection.find(
-            {"user_id": ObjectId(user_id)},
+            {"user_id": user_id},  # Using user_id as a string
             {"chat_history": {"$slice": -10}}  # Get the last 10 conversations
         ).sort([("timestamp", 1)])  # Sort in ascending order (oldest first)
 
@@ -381,25 +379,21 @@ def upload_files():
         # Log interaction in MongoDB
         for file in uploaded_files:
             chats_collection.update_one(
-                {"user_id": ObjectId(user_id), "file_name": file.filename},
+                {"user_id": user_id, "file_name": file.filename},  # Using user_id as a string
                 {"$push": {
                     "chat_history": {
                         "question": user_question,
                         "response": response,
                         "timestamp": datetime.utcnow()
-                    }} ,
+                    }},
                  "$setOnInsert": {
-                     "user_id": ObjectId(user_id),
+                     "user_id": user_id,  # Using user_id as a string
                      "file_name": file.filename
                  }},
                 upsert=True
             )
 
         return jsonify({"response": response})
-
-    except Exception as e:
-        app.logger.error(f"Error in /upload: {e}")
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
     except Exception as e:
         app.logger.error(f"Error in /upload: {e}")
