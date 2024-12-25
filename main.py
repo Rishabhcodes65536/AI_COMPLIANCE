@@ -9,18 +9,22 @@ from dotenv import load_dotenv
 import logging
 import PyPDF2
 from docx import Document
-
-
-from werkzeug.utils import secure_filename
+from pymongo import MongoClient
+from bson import ObjectId
 from datetime import datetime
 
 
-initial_date = datetime(2024, 11, 1)  # Example hardcoded date (today's date or any fixed date)
+
+# MongoDB Setup
+client = MongoClient("mongodb+srv://jainrishabh32768:ZYsjkxK62VrO0Nqo@cluster0.h5cd0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Update with your MongoDB connection URI
+db = client["test"]  # Replace with your database name
+users_collection = db["users"]
+chats_collection = db["chats"]
 
 
-# import textract
+initial_date = datetime(2024, 11, 1)  
 
-# Load environment variables
+
 load_dotenv()
 
 # Configuration
@@ -31,11 +35,10 @@ GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
 URL = 'https://www.revisor.mn.gov/statutes/cite/245D/full'
 
-# Initialize Flask app
 
 
 app = Flask(__name__)
-app.secret_key = SECRET_KEY  # Required for session management
+app.secret_key = SECRET_KEY 
 app.logger.setLevel(logging.INFO)
 
 # Configure OAuth
@@ -53,18 +56,10 @@ google = oauth.register(
     client_kwargs={'scope': 'email profile'}
 )
 
-# Global variable to track the last known hash of the webpage
 last_known_hash = None
 
-
-
-
-
-
 def fetch_webpage_content(url):
-    """
-    Fetch the content of a webpage and return its MD5 hash and last modified timestamp.
-    """
+
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -94,12 +89,9 @@ def get_answer(question,content):
         'Authorization': f'Bearer app-G2VCBPrxr5iWvKOHlL9jxwBt',
         'Content-Type': 'application/json'
     }
-    # question=question[:3000]
 
-     # Define a safety limit for input length (approximately 3.5k tokens)
-    max_length = 12000  # This assumes ~3.5k tokens is ~12,000 characters; adjust as needed.
+    max_length = 12000  # This assumes ~3.5k tokens is ~12,000 characters
 
-    # Truncate the input question based on character length
     if len(content) > max_length:
         content = content[:max_length]
         app.logger.info(f"Input question truncated to {max_length} characters.")
@@ -107,9 +99,9 @@ def get_answer(question,content):
     app.logger.info("\nQuestion is ",question)
     app.logger.info("\nContent is ",content)
     
-
+    conversation="last ten conversation"
     data = {
-        "inputs": {"content":content,"combined_content":question+"\n"+content},
+        "inputs": {"content":content,"conversation":conversation,"combined_content":question+"\n"+content},
         "query":question,
         "response_mode": "blocking",
         "conversation_id": "",
@@ -170,7 +162,6 @@ def check_update():
     if current_hash is None:
         return jsonify({"error": "Failed to fetch the page."}), 500
 
-    # Calculate the date range (from initial_date to now)
     current_date = datetime.now()
     date_range = f"From {initial_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
 
@@ -193,37 +184,70 @@ def check_update():
         }), 200
     
 
-# Google OAuth Routes
 @app.route('/login')
 def login():
     """
-    Redirect the user to Google's OAuth 2.0 authorization page.
+    Login endpoint to initiate Google OAuth.
     """
-    # if 'user' in session:
-    #     return redirect(url_for('dashboard'))  # or any logged-in page
-    redirect_uri = url_for('google_callback', _external=True)  # Generates full URL
+    redirect_uri = url_for('google_callback', _external=True)
     return google.authorize_redirect(redirect_uri)
-    # return google.authorize_redirect('http://localhost:5000/google/callback')
 
 
 @app.route('/google/callback')
 def google_callback():
     """
-    Handle the callback from Google OAuth and fetch the user's profile.
+    Handle Google OAuth callback, log user into the session, and store user in MongoDB.
     """
     try:
+        # Step 1: Get the OAuth token
         token = google.authorize_access_token()
+        if not token:
+            app.logger.error("Failed to retrieve OAuth token.")
+            raise ValueError("Failed to retrieve OAuth token.")
+
+        # Step 2: Get user information from Google
         user_info = google.get('userinfo').json()
-
         if not user_info:
-            raise ValueError("Failed to fetch user info")  # Handle failure gracefully
+            app.logger.error("Failed to retrieve user information from Google.")
+            raise ValueError("Failed to retrieve user information from Google.")
 
-        session['user'] = user_info
-        app.logger.info(f"User logged in: {user_info}")
+        if 'email' not in user_info:
+            app.logger.error(f"Incomplete user information: {user_info}")
+            raise ValueError("Incomplete user information received from Google.")
+
+        # Step 3: Create user session data
+        user = {
+            "name": user_info.get("name", "User"),
+            "email": user_info["email"],
+            "picture": user_info.get("picture", "/static/default-profile.png"),
+        }
+
+        # Step 4: Check if user exists in MongoDB
+        existing_user = users_collection.find_one({"email": user['email']})
+        if not existing_user:
+            user['created_at'] = datetime.utcnow()
+            user['updated_at'] = datetime.utcnow()
+            user_id = users_collection.insert_one(user).inserted_id
+            app.logger.info(f"New user created: {user}")
+        else:
+            user_id = existing_user["_id"]
+            app.logger.info(f"Existing user found: {existing_user}")
+
+        # Step 5: Store user ID as a string in the session
+        user['id'] = str(user_id)
+        session['user'] = user
+        app.logger.debug(f"Session data: {session['user']}")
+
         return redirect(url_for('dashboard'))
+
     except Exception as e:
-        app.logger.error(f"Error during Google OAuth: {e}")
-        return redirect(url_for('home'))  # Avoid redirecting to login to break the loop
+        app.logger.error(f"Error during Google OAuth callback: {e}")
+        return render_template(
+            'error.html',
+            message="An error occurred during login. Please try again or contact support.",
+            retry_url=url_for('login')
+        )
+
 
 
 @app.route('/dashboard')
@@ -234,7 +258,7 @@ def dashboard():
     user = session.get('user')
     if not user:
         return redirect(url_for('login'))
-    return render_template('ui_dark.html', user=user)
+    return render_template('new_ui.html', user=user)
 
 
 @app.route('/logout')
@@ -243,11 +267,9 @@ def logout():
     Log out the user by clearing the session.
     """
     session.clear()
-    return  render_template('ui_dark.html')  # Redirect to login, not other routes
+    return  render_template('new_ui.html')  
 
 
-
-#file upload section
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -256,16 +278,14 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx'}
 
 
 def extract_text_from_pdf(file):
-    """
-    Extract text from a PDF file.
-    """
+ 
     try:
-        # Open the file
+   
         pdf_reader = PyPDF2.PdfReader(file)
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text()
-        # app.logger.info(text)
+        
         return text
     except Exception as e:
         app.logger.error('no text')
@@ -289,17 +309,15 @@ def extract_text_from_docx(file):
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# Helper function to check file format
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Route for homepage
 @app.route('/files')
-def index():
-    return render_template('files.html')
+def files():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('files.html', user=session['user'])
 
-
-# Combine text with file titles for indexing
 def extract_text_from_file(file):
     """
     Extract text from an uploaded file.
@@ -311,8 +329,7 @@ def extract_text_from_file(file):
         text = extract_text_from_docx(file)
     else:
         raise ValueError("Unsupported file format. Only PDF and DOCX are allowed.")
-    
-    # Add title delimiter for indexing
+
     return f"<title>{file.filename}</title>\n<file_content>\n{text}\n</file_content>"
 
 
@@ -321,35 +338,72 @@ def upload_files():
     """
     Endpoint for uploading files, extracting text, and interacting with LLM.
     """
-    uploaded_files = request.files.getlist("files")
-    # system_call = "You are a helpful compliance agent who is suppose to answer user query"
-
-    # Add user question 
-
-    # we are appending it first so it does not get truncated
-    user_question = request.form.get("question", "")
-    user_query = f"/n <user_question> {user_question} /n </user_question>"
-    # Extract text from uploaded files
-    file_content=""
-    for file in uploaded_files:
-        try:
-            extracted_text = extract_text_from_file(file)
-            file_content += f"\n <file_separator>\n{extracted_text} </file_separator>"
-        except Exception as e:
-            return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
-
-    # combined_text=combined_text[]
-
-    # truncated_text=combined_text[:3000]
-    # app.logger.info(truncated_text)
-    # app.logger.info(combined_text)
-    # Send combined text to the LLM
     try:
-        response = get_answer(user_query,file_content)  # Replace with your actual LLM function
-    except Exception as e:
-        return jsonify({"error": f"Failed to interact with LLM: {str(e)}"}), 500
+        # Get uploaded files and user question
+        uploaded_files = request.files.getlist("files")
+        user_question = request.form.get("question", "")
+        user_query = f"\n <user_question> {user_question} \n </user_question>"
+        user_id = session.get('user', {}).get('id')  # Ensure the user is logged in
+        
+        if not user_id:
+            return jsonify({"error": "User not logged in."}), 401
 
-    return jsonify({"response": response})
+        # Extract text from files
+        file_content = ""
+        for file in uploaded_files:
+            try:
+                extracted_text = extract_text_from_file(file)
+                file_content += f"\n <file_separator>\n{extracted_text} </file_separator>"
+            except Exception as e:
+                return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
+
+        # Retrieve the past 10 conversations from the database
+        chat_history = chats_collection.find(
+            {"user_id": ObjectId(user_id)},
+            {"chat_history": {"$slice": -10}}  # Get the last 10 conversations
+        ).sort([("timestamp", 1)])  # Sort in ascending order (oldest first)
+
+        # Format chat history with appropriate XML separators
+        formatted_history = ""
+        for chat in chat_history:
+            for entry in chat["chat_history"]:
+                question = entry.get("question", "").strip()
+                response = entry.get("response", "").strip()
+                if question and response:
+                    formatted_history += f"\n<chat>\n  <question>{question}</question>\n  <response>{response}</response>\n</chat>\n"
+        
+        # Add the formatted chat history to the user query
+        user_query = f"{formatted_history}\n<user_question>{user_question}</user_question>"
+
+        # Interact with LLM
+        response = get_answer(user_query, file_content)
+
+        # Log interaction in MongoDB
+        for file in uploaded_files:
+            chats_collection.update_one(
+                {"user_id": ObjectId(user_id), "file_name": file.filename},
+                {"$push": {
+                    "chat_history": {
+                        "question": user_question,
+                        "response": response,
+                        "timestamp": datetime.utcnow()
+                    }} ,
+                 "$setOnInsert": {
+                     "user_id": ObjectId(user_id),
+                     "file_name": file.filename
+                 }},
+                upsert=True
+            )
+
+        return jsonify({"response": response})
+
+    except Exception as e:
+        app.logger.error(f"Error in /upload: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+    except Exception as e:
+        app.logger.error(f"Error in /upload: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 # Route to handle file deletion
 @app.route('/delete/<filename>', methods=['DELETE'])
@@ -407,3 +461,47 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
     except ValueError as e:
         logging.error(f"Failed to decode JSON response: {e}")
         return {"error": "Failed to decode JSON response"}
+
+
+
+# Converted monolithic to proper directory structure for easy debugging
+
+# main.py
+# from flask import Flask
+# import os
+# import logging
+# import sys
+# from pathlib import Path
+
+# # Add the project root directory to Python path
+# project_root = Path(__file__).parent
+# sys.path.append(str(project_root))
+
+# from routes.auth import auth_bp
+# from routes.file import file_bp
+# from routes.main import main_bp
+# from config import Config
+
+# def create_app():
+#     app = Flask(__name__)
+    
+#     # Load configuration
+#     app.config.from_object(Config)
+    
+#     # Configure logging
+#     app.logger.setLevel(logging.INFO)
+    
+#     # Create upload folder if it doesn't exist
+#     if not os.path.exists(app.config['UPLOAD_FOLDER']):
+#         os.makedirs(app.config['UPLOAD_FOLDER'])
+    
+#     # Register blueprints
+#     app.register_blueprint(auth_bp)
+#     app.register_blueprint(file_bp)
+#     app.register_blueprint(main_bp)
+    
+#     return app
+
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(debug=True)
