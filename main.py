@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from authlib.integrations.flask_client import OAuth
 import requests
+import json
 import os
 import hashlib
 from datetime import datetime
@@ -8,17 +9,13 @@ import logging
 from dotenv import load_dotenv
 import logging
 import PyPDF2
+from functools import wraps
 from docx import Document
 from pymongo import MongoClient
 from datetime import datetime
+from bson import ObjectId
 
 
-
-# MongoDB Setup
-client = MongoClient("mongodb+srv://jainrishabh32768:ZYsjkxK62VrO0Nqo@cluster0.h5cd0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Update with your MongoDB connection URI
-db = client["test"]  # Replace with your database name
-users_collection = db["users"]
-chats_collection = db["chats"]
 
 
 initial_date = datetime(2024, 11, 1)  
@@ -40,19 +37,22 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY 
 app.logger.setLevel(logging.INFO)
 
-# Configure OAuth
+
+# MongoDB Setup
+client = MongoClient("mongodb+srv://jainrishabh32768:ZYsjkxK62VrO0Nqo@cluster0.h5cd0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Update with your MongoDB connection URI
+db = client["test"]  # Replace with your database name
+users_collection = db["users"]
+chats_collection = db["chats"]
+
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
-    client_kwargs={'scope': 'email profile'}
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
 )
 
 
@@ -184,40 +184,71 @@ def check_update():
         }), 200
     
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
 
-# Google OAuth Routes
+app.json_encoder = JSONEncoder
+
 @app.route('/login')
 def login():
-    """
-    Redirect the user to Google's OAuth 2.0 authorization page.
-    """
-    # if 'user' in session:
-    #     return redirect(url_for('dashboard'))  # or any logged-in page
-    redirect_uri = url_for('google_callback', _external=True)  # Generates full URL
-    return google.authorize_redirect(redirect_uri)
-    # return google.authorize_redirect('http://localhost:5000/google/callback')
-
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
+    return google.authorize_redirect(
+        redirect_uri=url_for('google_callback', _external=True)
+    )
 
 @app.route('/google/callback')
 def google_callback():
-    """
-    Handle the callback from Google OAuth and fetch the user's profile.
-    """
     try:
+        # Get token and user info from Google
         token = google.authorize_access_token()
-        user_info = google.get('userinfo').json()
+        if not token:
+            raise ValueError("Failed to get access token")
+            
+        resp = google.get('userinfo')
+        user_info = resp.json()
+        
+        if not user_info or 'email' not in user_info:
+            raise ValueError("Failed to get user info")
 
-        if not user_info:
-            raise ValueError("Failed to fetch user info")  # Handle failure gracefully
+        # Prepare user data
+        user_data = {
+            "name": user_info.get("name", "User"),
+            "email": user_info["email"],
+            "picture": user_info.get("picture", "/static/default-profile.png"),
+            "last_login": datetime.utcnow()
+        }
 
-        session['user'] = user_info
-        app.logger.info(f"User logged in: {user_info}")
-        return redirect(url_for('dashboard'))
+        # Update or insert user in MongoDB
+        users_collection.update_one(
+            {"email": user_data["email"]},
+            {"$set": user_data},
+            upsert=True
+        )
+
+        # Store user info in session
+        session['user'] = user_data
+        return redirect(url_for('files'))
+
     except Exception as e:
-        app.logger.error(f"Error during Google OAuth: {e}")
-        return redirect(url_for('home'))  # Avoid redirecting to login to break the loop
+        app.logger.error(f"Error in Google callback: {str(e)}")
+        return render_template('error.html', error="Authentication failed. Please try again.")
 
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -228,16 +259,6 @@ def dashboard():
     if not user:
         return redirect(url_for('login'))
     return render_template('new_ui.html', user=user)
-
-
-@app.route('/logout')
-def logout():
-    """
-    Log out the user by clearing the session.
-    """
-    session.clear()
-    return  render_template('new_ui.html')  
-
 
 
 
