@@ -145,7 +145,7 @@ Contributions are welcome! Feel free to submit a pull request or raise an issue 
 
 ---
 
-## Images
+## Dify Config
 
 ![Configuration Pipeline](./config.png)
 
