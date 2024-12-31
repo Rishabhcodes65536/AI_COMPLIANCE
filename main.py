@@ -18,10 +18,7 @@ from bs4 import BeautifulSoup
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-
-initial_date = datetime(2024, 11, 1)  
-
-
+# Load environment variables
 load_dotenv()
 
 # Configuration
@@ -30,6 +27,7 @@ API_KEY = os.getenv('API_KEY')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
+MONGO_URI = os.getenv('MONGO_URI')
 URL = 'https://www.revisor.mn.gov/statutes/cite/245D/full'
 MODE = os.getenv('MODE', 'production')
 
@@ -56,7 +54,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 # MongoDB Setup
-client = MongoClient("mongodb+srv://jainrishabh32768:ZYsjkxK62VrO0Nqo@cluster0.h5cd0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Update with your MongoDB connection URI
+client = MongoClient(MONGO_URI)  # Use the MongoDB URI from the .env file
 db = client["test"]  # Replace with your database name
 users_collection = db["users"]
 chats_collection = db["chats"]
@@ -66,8 +64,8 @@ hashes_collection = db["hashes"]
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile',
@@ -122,6 +120,7 @@ def check_update():
     last_known_hash = last_known_hash_doc['hash'] if last_known_hash_doc else None
 
     current_date = datetime.now()
+    initial_date = last_known_hash_doc['last_checked'] if last_known_hash_doc else current_date
     date_range = f"From {initial_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
 
     if last_known_hash is None:
