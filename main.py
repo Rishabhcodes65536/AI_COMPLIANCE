@@ -278,7 +278,7 @@ def extract_text_from_docx(file):
         doc = Document(file)
         text = ""
         for paragraph in doc.paragraphs:
-            text += paragraph.text + "\n"
+            text += paragraph.text
         return text
     except Exception as e:
         raise ValueError(f"Failed to extract text from DOCX: {str(e)}")
@@ -375,7 +375,7 @@ def upload_files():
         for file in uploaded_files:
             try:
                 extracted_text = extract_text_from_file(file)
-                file_content += f"\n <file_separator>\n{extracted_text} </file_separator>"
+                file_content += f"\n <content>\n{extracted_text} </content>"
             except Exception as e:
                 return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
 
@@ -386,7 +386,7 @@ def upload_files():
         ).sort([("timestamp", 1)])  # Sort in ascending order (oldest first)
 
         # Debugging: Check if chat_history is being fetched correctly
-        app.logger.error(f"Chat history retrieved: {chat_history}")
+        app.logger.info(f"Chat history retrieved: {chat_history}")
 
         # Format chat history with appropriate XML separators
         formatted_history = ""
@@ -408,6 +408,7 @@ def upload_files():
         # Interact with LLM
         response = get_answer(user_query, file_content, formatted_history)
 
+        app.logger.info(f"Response from LLM: {response}")
         # Log interaction in MongoDB
         for file in uploaded_files:
             file_name = file.filename if file.filename else "empty"

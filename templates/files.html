@@ -12,23 +12,23 @@
                 colors: {
                     bgPrimary: 'var(--bg-primary)',
                     panel: 'var(--bg-panel)',
-                    checkbox: '#9CA3AF', // Muted gray for checkboxes
-                    checkmark: '#1F2937', // Dark gray for checkmarks
+                    checkbox: '#9CA3AF', 
+                    checkmark: '#1F2937', 
                     buttonBg: {
-                        light: '#3B82F6', // Button background in light mode
-                        dark: '#1E40AF' // Button background in dark mode
+                        light: '#3B82F6', 
+                        dark: '#1E40AF' 
                     },
                     buttonHover: {
-                        light: '#2563EB', // Hover state for light mode
-                        dark: '#1C3AA9' // Hover state for dark mode
+                        light: '#2563EB', 
+                        dark: '#1C3AA9' 
                     },
                     dashboardText: {
-                        light: '#374151', // Visible text color in light mode
-                        dark: '#E5E7EB' // Visible text color in dark mode
+                        light: '#374151', 
+                        dark: '#E5E7EB' 
                     },
                     textPrimary: {
-                        light: '#1D4ED8', // Vibrant blue in light mode
-                        dark: '#93C5FD' // Lighter blue in dark mode
+                        light: '#1D4ED8', 
+                        dark: '#93C5FD' 
                     }
                 }
             }
@@ -37,18 +37,18 @@
     </script>
     <style>
         :root {
-            /* Light Mode Colors */
-            --bg-primary: #f9fafb; /* Subtle light background for the body */
-            --bg-panel: #ffffff; /* Clean white for panels */
-            --text-color: #333333; /* Dark gray for readable text */
-            --button-bg: #1a73e8; /* Google blue for buttons */
-            --button-hover-bg: #1558b0; /* Darker blue for hover */
-            --chat-bubble-bg: #e8f0fe; /* Light blue for chat bubbles */
-            --chat-bubble-user-bg: #dce6f1; /* Slightly muted blue for user messages */
-            --input-bg: #ffffff; /* White background for input */
-            --input-text-color: #333333; /* Dark text for input */
-            --border-color: #e0e0e0; /* Light border color */
-            --shadow-color: rgba(0, 0, 0, 0.1); /* Subtle shadow color */
+
+            --bg-primary: #f9fafb; 
+            --bg-panel: #ffffff; 
+            --text-color: #333333; 
+            --button-bg: #1a73e8; 
+            --button-hover-bg: #1558b0; 
+            --chat-bubble-bg: #e8f0fe; 
+            --chat-bubble-user-bg: #dce6f1; 
+            --input-bg: #ffffff; 
+            --input-text-color: #333333; 
+            --border-color: #e0e0e0; 
+            --shadow-color: rgba(0, 0, 0, 0.1); 
         }
 
         body {
@@ -75,7 +75,7 @@
         }
 
         body.dark-mode {
-            /* Dark Mode Colors */
+
             --bg-primary: #22262b;
             --bg-panel: #37383b;
             --text-color: #f0f0f0;
@@ -89,7 +89,6 @@
             --shadow-color: rgba(0, 0, 0, 0.5);
         }
 
-        /* Custom checkbox */
         input[type="checkbox"] {
             -webkit-appearance: none;
             appearance: none;
@@ -110,13 +109,12 @@
             transform: scale(1.1);
         }
         input[type="checkbox"]:checked::after {
-            content: '\2713'; /* Checkmark */
+            content: '\2713'; 
             color: var(--text-color);
             font-weight: bold;
             font-size: 14px;
         }
 
-        /* Modal Background */
         .modal {
             display: none;
             position: fixed;
@@ -129,7 +127,6 @@
             align-items: center;
         }
 
-        /* Modal Content */
         .modal-content {
             background-color: var(--bg-panel);
             padding: 20px;
@@ -138,7 +135,6 @@
             width: 400px;
         }
 
-        /* Panel Styles */
         #leftPanel,
         #collapsedPanel,
         #rightPanel {
@@ -174,7 +170,6 @@
             transition: background-color 0.3s;
         }
 
-        /* Chat Bubble Styling */
         .chat-bubble {
             max-width: 75%;
             padding: 12px 18px;
@@ -207,7 +202,6 @@
             box-shadow: inset 0 4px 6px var(--shadow-color);
         }
 
-        /* Common Button Styling */
         .btn-add-pdf,
         .btn-add-pdf-minimal {
             display: flex;
@@ -230,7 +224,6 @@
             box-shadow: 0 6px 12px var(--shadow-color);
         }
 
-        /* Input Styling */
         input[type="text"] {
             background-color: var(--input-bg);
             color: var(--input-text-color);
@@ -238,7 +231,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             width: 100%;
- box-shadow: inset 0 2px 4px var(--shadow-color);
+            box-shadow: inset 0 2px 4px var(--shadow-color);
             transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
         }
         input[type="text"]:focus {
@@ -246,7 +239,6 @@
             box-shadow: 0 0 6px var(--button-bg);
         }
 
-        /* Navbar Styles */
         header {
             background-color: var(--bg-panel);
             color: var(--text-color);
@@ -345,7 +337,7 @@
                             group-hover:block 
                             transition-all 
                             duration-300 
-                            
+
                         "
                     >
                         <a 
@@ -358,7 +350,7 @@
                                 hover:bg-gray-100 
                                 transition-colors 
                                 duration-300 
-                                
+
                             "
                         >
                             Dashboard
@@ -373,7 +365,7 @@
                                 hover:bg-gray-100 
                                 transition-colors 
                                 duration-300 
-                              
+
                             "
                         >
                             Logout
@@ -388,15 +380,15 @@
     <!-- Left Panel: Sources -->
     <div id="leftPanel" class="w-1/4 bg-panel p-4 border-r border-gray-700 transition-all duration-300">
         <div class="flex items-center justify-between mb-4">
-            <h1 class="text-lg font-semibold">Sources</h1>
+            <h1 class="text-lg font-semibold">Upload Documents</h1>
             <div id="collapser">
                 <i class="fas fa-angle-left"></i>
             </div>
         </div>
-        <button id="uploadButton" class="btn-add-pdf w-full">Add PDF</button>
+        <button id="uploadButton" class="btn-add-pdf w-full">Add Documents</button>
         <div id="sourceList" class="mt-4 space-y-3">
             <div class="flex items-center justify-between">
-                <span>Select all sources</span>
+                <span>Select all documents</span>
                 <input type="checkbox" id="selectAll" />
             </div>
         </div>
@@ -411,7 +403,6 @@
         <div id="checkedItems" class="space-y-2 text-center text-sm"></div>
     </div>
 
-   
 <!-- Right Panel: Chat Section -->
 <div id="rightPanel" class="w-3/4 flex flex-col ml-4 bg-panel transition-colors duration-300">
     <div class="bg-panel p-4 flex justify-between items-center border-b border-gray-700">
@@ -433,7 +424,7 @@
     <div class="rounded-lg shadow-lg p-6 w-full max-w-2xl relative transition-colors duration-300" style="background-color: var(--bg-panel);">
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center">
-                <i class="fas fa-wifi" style="color: var(--text-color); text-xl mr-2;"></i>
+                <i class="fas fa-wifi text-xl mr-2" style="color: var(--text-color);"></i>
                 <h2 class="text-2xl font-semibold" style="color: var(--text-color);">Minn-Ai</h2>
             </div>
             <button id="closeModal" class="text-gray-400 hover:text-gray-200">
@@ -441,17 +432,17 @@
             </button>
         </div>
 
-        <h2 class="text-2xl font-semibold mb-2" style="color: var(--text-color);">Add sources</h2>
-        <p class="mb-6" style="color: var(--text-color);">Sources let Minn-Ai base its responses on the information that matters most to you.</p>
+        <h2 class="text-2xl font-semibold mb-2" style="color: var(--text-color);">Add Documents</h2>
+        <p class="mb-6" style="color: var(--text-color);">documents let Minn-Ai base its responses on the information that matters most to you.</p>
 
         <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center mb-6">
             <i class="fas fa-upload text-gray-400 mb-4"></i>
-            <p class="text-xl font-semibold mb-2" style="color: var(--text-color);">Upload sources</p>
+            <p class="text-xl font-semibold mb-2" style="color: var(--text-color);">Upload documents</p>
             <input type="file" id="fileInput" class="hidden" multiple>
             <label for="fileInput" class="text-blue-500 underline cursor-pointer">
                 Drag and drop or choose file to upload
             </label>
-            <p class="text-gray-400">Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3)</p>
+            <p class="text-gray-400">Supported file types: PDF, DOCX</p>
         </div>
 
         <div class="flex items-center">
@@ -468,8 +459,7 @@
 document.getElementById('theme-toggle').addEventListener('click', function() {
     document.body.classList.toggle('dark-mode');
     document.body.classList.toggle('light-mode');
-    
-    // Change the icon based on the theme
+
     const themeIcon = document.getElementById('theme-icon');
     if (document.body.classList.contains('dark-mode')) {
         themeIcon.classList.remove('fa-moon');
@@ -481,12 +471,11 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
 });
 </script>
 <!-- <script>
-    // Light/Dark Mode Toggle
+
     const modeToggle = document.getElementById('theme-toggle');
     const toggleIcon = document.getElementById('theme-icon');
     const htmlElement = document.documentElement;
 
-    // Set initial theme from localStorage
     const savedTheme = localStorage.getItem('theme');
     const isLightMode = savedTheme === 'light';
 
@@ -498,25 +487,23 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
         htmlElement.classList.add('dark');
     }
 
-    // Event listener for toggle button
     modeToggle.addEventListener('click', () => {
         const isCurrentlyLightMode = htmlElement.classList.contains('dark');
 
         if (isCurrentlyLightMode) {
-            // Switch to Light Mode
+
             htmlElement.classList.remove('dark');
             document.body.classList.add('light-mode');
             document.body.classList.remove('dark-mode');
             localStorage.setItem('theme', 'light');
         } else {
-            // Switch to Dark Mode
+
             htmlElement.classList.add('dark');
             document.body.classList.add('dark-mode');
             document.body.classList.remove('light-mode');
             localStorage.setItem('theme', 'dark');
         }
 
-        // Toggle specific element classes
         document.querySelectorAll('#leftPanel, #collapsedPanel, #rightPanel').forEach(panel => {
             panel.classList.toggle('light-mode', !isCurrentlyLightMode);
             panel.classList.toggle('dark-mode', isCurrentlyLightMode);
@@ -532,7 +519,6 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
             button.classList.toggle('dark-mode', isCurrentlyLightMode);
         });
 
-        // Update toggle icon
         toggleIcon.classList.toggle('fa-sun', !isCurrentlyLightMode);
         toggleIcon.classList.toggle('fa-moon', isCurrentlyLightMode);
     });
@@ -551,10 +537,8 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
     const fileCount = document.getElementById('fileCount');
     const chatInput = document.getElementById('chatInput');
 
-    const uploadedFiles = new Map(); // Use a Map to store files by name
+    const uploadedFiles = new Map(); 
 
-
-    // Add a user message bubble
 function addUserMessage(message) {
     const chatArea = document.getElementById('chatArea');
     const userBubble = document.createElement('div');
@@ -564,47 +548,40 @@ function addUserMessage(message) {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// Add an AI message bubble with formatting
 function addAIMessage(message) {
     const chatArea = document.getElementById('chatArea');
     const aiBubble = document.createElement('div');
     aiBubble.className = 'chat-bubble ai';
-    aiBubble.innerHTML = message; // Use innerHTML to retain formatting
+    aiBubble.innerHTML = message; 
     chatArea.appendChild(aiBubble);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-    // Open the modal
     uploadButton.onclick = () => {
         uploadModal.style.display = 'flex';
     };
 
-    // Close the modal
     closeModal.onclick = () => {
         uploadModal.style.display = 'none';
     };
 
-    // Handle file selection
     fileInput.onchange = () => {
-        const files = Array.from(fileInput.files); // Convert FileList to Array
+        const files = Array.from(fileInput.files); 
 
         for (const file of files) {
             if (!uploadedFiles.has(file.name)) {
-                uploadedFiles.set(file.name, file); // Store the actual File object
-                addSourceToList(file.name); // Add file name to the UI
+                uploadedFiles.set(file.name, file); 
+                addSourceToList(file.name); 
             }
         }
 
-        // Update progress bar
         const progressPercentage = (uploadedFiles.size / 50) * 100;
         progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
         fileCount.textContent = `${uploadedFiles.size}/50`;
 
-        // Reset file input
         fileInput.value = '';
     };
 
-    // Add source to the list
     function addSourceToList(fileName) {
         const sourceItem = document.createElement('div');
         sourceItem.className = 'flex items-center justify-between my-2';
@@ -618,7 +595,6 @@ function addAIMessage(message) {
         sourceList.appendChild(sourceItem);
     }
 
-    // Select all checkboxes
     selectAll.onchange = () => {
         const checkboxes = sourceList.querySelectorAll('input[type=checkbox]');
         checkboxes.forEach(cb => cb.checked = selectAll.checked);
@@ -628,34 +604,30 @@ function handleSubmission() {
     const selectedFiles = [];
     const formData = new FormData();
 
-    // Get selected files
     sourceList.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
-        const file = uploadedFiles.get(cb.value); // Get the file object by name
+        const file = uploadedFiles.get(cb.value); 
         if (file) selectedFiles.push(file);
     });
 
     const userQuestion = chatInput.value.trim();
 
-    // Basic validations
     if (!userQuestion) {
         alert('Please enter a question.');
         return;
     }
 
-    // Add user's message bubble
     addUserMessage(userQuestion);
+    chatInput.value = '';  
 
-    // File size check (example: 50MB limit)
     for (let file of selectedFiles) {
-        if (file.size > 50 * 1024 * 1024) {  // 50MB size limit
+        if (file.size > 50 * 1024 * 1024) {  
             alert("File size exceeds the limit of 50MB");
             return;
         }
-        formData.append('files', file); // Append actual File objects
+        formData.append('files', file); 
     }
     formData.append('question', userQuestion);
 
-    // Add AI loading bubble
     const chatArea = document.getElementById('chatArea');
     const loadingBubble = document.createElement('div');
     loadingBubble.className = 'chat-bubble ai loading';
@@ -667,7 +639,6 @@ function handleSubmission() {
     chatArea.appendChild(loadingBubble);
     chatArea.scrollTop = chatArea.scrollHeight;
 
-    // API call
     fetch('/upload', {
         method: 'POST',
         body: formData,
@@ -678,36 +649,31 @@ function handleSubmission() {
                     throw new Error(`Failed to submit files: ${err.message || err}`);
                 });
             }
-            return response.json(); // Assuming the API response is in JSON format
+            return response.json(); 
         })
         .then(data => {
-            // Remove loading bubble
+
             chatArea.removeChild(loadingBubble);
 
-            // Add AI's response bubble with formatted content
             if (data.response) {
-                addAIMessage(data.response.replace(/\n/g, '<br>')); // Replace line breaks for HTML rendering
+                addAIMessage(data.response.replace(/\n/g, '<br>')); 
             } else {
                 addAIMessage("No response text received.");
             }
-            chatInput.value = '';  // Clear input after successful response
         })
         .catch(error => {
             console.error('Error:', error);
 
-            // Remove loading bubble
             chatArea.removeChild(loadingBubble);
 
-            // Add error message bubble
             const errorBubble = document.createElement('div');
             errorBubble.className = 'bg-red-600 text-white p-2 rounded-lg self-start max-w-xs mb-2';
-            errorBubble.textContent = 'There was an error processing your request. Please try again.' + error;
+            errorBubble.textContent = 'There was an error processing your request. Please try again.';
             chatArea.appendChild(errorBubble);
-            chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the latest message
+            chatArea.scrollTop = chatArea.scrollHeight; 
         });
 }
 
-// CSS for the loading animation
 const style = document.createElement('style');
 style.textContent = `
     .chat-bubble.ai.loading {
@@ -739,19 +705,16 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Attach event listeners
 submitSources.onclick = handleSubmission;
 chatInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
-        event.preventDefault(); // Prevent default form submission if inside a form
+        event.preventDefault(); 
         handleSubmission();
     }
 });
 
-
-    // Reset modal after successful submission
     function resetModal() {
-        uploadedFiles.clear(); // Clear the Map
+        uploadedFiles.clear(); 
         sourceList.innerHTML = '';
         progressBar.style.width = '0%';
         fileCount.textContent = '0/50';
@@ -759,9 +722,6 @@ chatInput.addEventListener('keypress', (event) => {
         uploadModal.style.display = 'none';
     }
 
-
-
-    //collapsing logic
     const leftPanel = document.getElementById('leftPanel');
     const collapsedPanel = document.getElementById('collapsedPanel');
     const addPdfCollapsed = document.getElementById('addPdfCollapsed');
