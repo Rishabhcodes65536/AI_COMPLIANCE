@@ -133,6 +133,12 @@ or
 
 ---
 
+## Time Complexity Optimization with Merkle Trees
+
+To efficiently detect changes in webpage content, Minn-AI uses Merkle trees. This approach reduces the time complexity of change detection by breaking the content into smaller blocks, hashing them, and then combining these hashes to form a Merkle root. This method allows for quick comparison of large datasets by comparing the Merkle roots, significantly improving performance and scalability.
+
+---
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
