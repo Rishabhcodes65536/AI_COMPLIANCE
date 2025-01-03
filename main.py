@@ -40,7 +40,7 @@ dummy_user = {
 }
 
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='public/static')
 app.secret_key = SECRET_KEY 
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
@@ -368,12 +368,9 @@ def get_answer(question,content,formatted_history):
 @app.route('/files')
 @login_required
 def files():
-    if MODE == 'test':
-        user = dummy_user
-    else:
-        user = session.get('user')
-        if not user:
-            return redirect(url_for('login'))
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login'))
     return render_template('files.html', user=user)
 
 def extract_text_from_file(file):

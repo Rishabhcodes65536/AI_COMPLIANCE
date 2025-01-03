@@ -386,6 +386,7 @@ button.copy-button:hover {
             ></i>
           </button>
 
+          {% if user %}
           <div class="relative group">
             <button
               id="userDropdown"
@@ -424,6 +425,15 @@ button.copy-button:hover {
               </a>
             </div>
           </div>
+          {% else %}
+          <a
+            href="/login"
+            class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
+          >
+            <i class="fab fa-google mr-2"></i>
+            Sign in with Google
+          </a>
+          {% endif %}
         </nav>
       </div>
     </header>
