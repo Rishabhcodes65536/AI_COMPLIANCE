@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_from_directory
 from authlib.integrations.flask_client import OAuth
 import requests
 import json
@@ -12,7 +12,7 @@ import PyPDF2
 from functools import wraps
 from docx import Document
 from pymongo import MongoClient
-from datetime import datetime, timedelta
+from datetime import datetime,timedelta
 from bson import ObjectId
 from bs4 import BeautifulSoup
 
@@ -39,7 +39,8 @@ dummy_user = {
     "last_login": datetime.utcnow()
 }
 
-app = Flask(__name__)
+
+app = Flask(__name__, static_folder='public/static')
 app.secret_key = SECRET_KEY 
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
@@ -51,12 +52,14 @@ app.logger.setLevel(logging.INFO)
 # Add this line to handle proxy headers correctly
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+
 # MongoDB Setup
 client = MongoClient(MONGO_URI)  # Use the MongoDB URI from the .env file
 db = client["test"]  # Replace with your database name
 users_collection = db["users"]
 chats_collection = db["chats"]
 hashes_collection = db["hashes"]
+
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -151,7 +154,7 @@ def root():
     """
     Render the homepage with the user interface.
     """
-    pdf_directory = os.path.join('public/static', '245D STRUCTURED DATA SET')
+    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
     pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
     return render_template('new_ui.html', pdfs=pdfs)
 
@@ -272,23 +275,32 @@ def dashboard():
     Redirect to the root.
     """
     user = session.get('user')
-    pdf_directory = os.path.join('public/static', '245D STRUCTURED DATA SET')
+    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
     pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
     return render_template('new_ui.html', user=user, pdfs=pdfs)
+
+
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx'}
 
+
+
 def extract_text_from_pdf(file):
+ 
     try:
+   
         pdf_reader = PyPDF2.PdfReader(file)
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text()
+        
         return text
     except Exception as e:
         app.logger.error('no text')
         raise ValueError(f"Failed to extract text from PDF: {str(e)}")
+
+from docx import Document
 
 def extract_text_from_docx(file):
     """
@@ -309,7 +321,7 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def get_answer(question, content, formatted_history):
+def get_answer(question,content,formatted_history):
     """
     Send a question to the external API and retrieve the answer.
     """
@@ -324,10 +336,13 @@ def get_answer(question, content, formatted_history):
         content = content[:max_length]
         app.logger.info(f"Input question truncated to {max_length} characters.")
 
-    app.logger.info("\nFormatted history is ", formatted_history)
+    # app.logger.info("\nQuestion is ",question)
+    # app.logger.info("\nContent is ",content)
+    app.logger.info("\nFormatted history is ",formatted_history)
+    # conversation=formatted_history
     data = {
-        "inputs": {"content": content, "conversation": formatted_history, "combined_content": question + "\n" + content},
-        "query": question,
+        "inputs": {"content":content,"conversation":formatted_history,"combined_content":question+"\n"+content},
+        "query":question,
         "response_mode": "blocking",
         "conversation_id": "",
         "user": "sanyam",
@@ -348,6 +363,7 @@ def get_answer(question, content, formatted_history):
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error communicating with the API: {e}")
         return "An error occurred while fetching the answer."
+    
 
 @app.route('/files')
 @login_required
@@ -370,6 +386,7 @@ def extract_text_from_file(file):
         raise ValueError("Unsupported file format. Only PDF and DOCX are allowed.")
 
     return f"<title>{file.filename}</title>\n<file_content>\n{text}\n</file_content>"
+
 
 @app.route('/upload', methods=['POST'])
 def upload_files():
@@ -419,11 +436,16 @@ def upload_files():
             ]
             formatted_history += ''.join(chat_entries)  # Join all entries into a single string
 
+        # Debugging: Log the formatted chat history to ensure it's populated
+        # app.logger.info(f"Formatted chat history: {formatted_history}")
+
         # Add the formatted chat history to the user query
         user_query = f"<user_question>{user_question}</user_question>"
 
         # Interact with LLM
         response = get_answer(user_query, file_content, formatted_history)
+
+        # app.logger.info(f"Response from LLM: {response}")
 
         # Parse the response to separate the actual response and citations
         if "@@@Perplexity Response:" in response:
@@ -455,11 +477,14 @@ def upload_files():
                 },
                 upsert=True
             )
+        print("Response is rishabh   ",actual_response)
+        print("Citations is rishabh   ",citations)
         return jsonify({"response": actual_response, "citations": citations})
 
     except Exception as e:
         app.logger.error(f"Error in /upload: {e}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 # Route to handle file deletion
 @app.route('/delete/<filename>', methods=['DELETE'])
@@ -471,8 +496,18 @@ def delete_file(filename):
     else:
         return jsonify({'error': f'{filename} not found'}), 404
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """
+    Serve static files.
+    """
+    return send_from_directory(app.static_folder, filename)
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
 
 def send_to_api(query, user, files=None, conversation_id="", response_mode="blocking"):
     """
@@ -492,7 +527,7 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
         'Authorization': f'Bearer {API_KEY}',
         'Content-Type': 'application/json'
     }
-    final_query = "You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge " + query
+    final_query="You are a helpful compliance agent who is suppose to answer user query the query with the given knowledge "+ query
     # Construct the payload
     app.logger.info(final_query)
     data = {
@@ -514,3 +549,47 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
     except ValueError as e:
         logging.error(f"Failed to decode JSON response: {e}")
         return {"error": "Failed to decode JSON response"}
+
+
+
+# Converted monolithic to proper directory structure for easy debugging
+
+# main.py
+# from flask import Flask
+# import os
+# import logging
+# import sys
+# from pathlib import Path
+
+# # Add the project root directory to Python path
+# project_root = Path(__file__).parent
+# sys.path.append(str(project_root))
+
+# from routes.auth import auth_bp
+# from routes.file import file_bp
+# from routes.main import main_bp
+# from config import Config
+
+# def create_app():
+#     app = Flask(__name__)
+    
+#     # Load configuration
+#     app.config.from_object(Config)
+    
+#     # Configure logging
+#     app.logger.setLevel(logging.INFO)
+    
+#     # Create upload folder if it doesn't exist
+#     if not os.path.exists(app.config['UPLOAD_FOLDER']):
+#         os.makedirs(app.config['UPLOAD_FOLDER'])
+    
+#     # Register blueprints
+#     app.register_blueprint(auth_bp)
+#     app.register_blueprint(file_bp)
+#     app.register_blueprint(main_bp)
+    
+#     return app
+
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(debug=True)
