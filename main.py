@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_from_directory
 from authlib.integrations.flask_client import OAuth
 import requests
 import json
@@ -40,7 +40,7 @@ dummy_user = {
 }
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.secret_key = SECRET_KEY 
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
@@ -207,22 +207,29 @@ def google_callback():
         state = request.args.get('state')
         stored_state = session.get('oauth_state')
         
+        app.logger.debug(f"State received: {state}")
+        app.logger.debug(f"Stored state: {stored_state}")
+        
         if not state or not stored_state or state != stored_state:
             raise ValueError("State verification failed")
         
         session.pop('oauth_state', None)
         
         code = request.args.get('code')
+        app.logger.debug(f"Authorization code received: {code}")
+        
         if not code:
             raise ValueError("No authorization code received")
 
         token = google.authorize_access_token()
+        app.logger.debug(f"Access token received: {token}")
+        
         if not token:
             raise ValueError("Failed to get access token")
         
-        # Updated this line to use the full URL
         resp = google.get('https://www.googleapis.com/oauth2/v3/userinfo', token=token)
         user_info = resp.json()
+        app.logger.debug(f"User info received: {user_info}")
         
         if not user_info or 'email' not in user_info:
             raise ValueError("Failed to get user info")
@@ -239,6 +246,7 @@ def google_callback():
             {"$set": user_data},
             upsert=True
         )
+        app.logger.debug(f"User data updated in MongoDB: {result}")
 
         session.permanent = True
         session['user'] = user_data
@@ -266,7 +274,10 @@ def dashboard():
     """
     Redirect to the root.
     """
-    return redirect(url_for('root'))
+    user = session.get('user')
+    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
+    pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
+    return render_template('new_ui.html', user=user, pdfs=pdfs)
 
 
 
@@ -355,6 +366,7 @@ def get_answer(question,content,formatted_history):
     
 
 @app.route('/files')
+@login_required
 def files():
     if MODE == 'test':
         user = dummy_user
@@ -486,6 +498,13 @@ def delete_file(filename):
         return jsonify({'message': f'{filename} deleted successfully'})
     else:
         return jsonify({'error': f'{filename} not found'}), 404
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """
+    Serve static files.
+    """
+    return send_from_directory(app.static_folder, filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
