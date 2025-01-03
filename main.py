@@ -505,7 +505,7 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
     }
 
     try:
-        response = requests.post(API_URL, headers=headers, json(data))
+        response = requests.post(API_URL, headers=headers, json=data)
         response.raise_for_status()  # Raise an exception for HTTP errors
         return response.json()
     except requests.exceptions.RequestException as e:
