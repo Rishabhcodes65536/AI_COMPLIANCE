@@ -444,7 +444,7 @@ button.copy-button:hover {
           Add Documents
         </button>
         <div id="sourceList" class="mt-4 space-y-3">
-          <div class="flex items-center justify-between">
+          <div id="selectAllContainer" class="flex items-center justify-between hidden">
             <span>Select all documents</span>
             <input type="checkbox" id="selectAll" />
           </div>
@@ -452,9 +452,9 @@ button.copy-button:hover {
         <div id="citationContainer" class="relative mt-4">
           <!-- Flex container for citation button with dynamic arrow -->
           <div class="flex items-center justify-between mb-4">
-            <h1 class="text-lg font-semibold">Citations</h1>
+            <h1 class="text-lg font-semibold">References</h1>
             <div id="citationToggle" class="flex items-center cursor-pointer">
-              <span class="text-sm font-medium">View Citations</span>
+              <span class="text-sm font-medium">View References</span>
               <i
                 id="citationArrow"
                 class="ml-2 fas fa-angle-right transition-transform duration-300"
@@ -616,6 +616,7 @@ button.copy-button:hover {
       const closeModal = document.getElementById("closeModal");
       const fileInput = document.getElementById("fileInput");
       const sourceList = document.getElementById("sourceList");
+      const selectAllContainer = document.getElementById("selectAllContainer");
       const submitSources = document.getElementById("submitSources");
       const selectAll = document.getElementById("selectAll");
       const progressBar = document.getElementById("progressBar");
@@ -664,6 +665,12 @@ button.copy-button:hover {
         const progressPercentage = (uploadedFiles.size / 50) * 100;
         progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
         fileCount.textContent = `${uploadedFiles.size}/50`;
+
+        if (uploadedFiles.size > 0) {
+          selectAllContainer.classList.remove("hidden");
+        } else {
+          selectAllContainer.classList.add("hidden");
+        }
 
         fileInput.value = "";
       };
