@@ -1,715 +1,853 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Agents</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
-            extend: {
-                colors: {
-                    bgPrimary: 'var(--bg-primary)',
-                    panel: 'var(--bg-panel)',
-                    checkbox: '#9CA3AF', // Muted gray for checkboxes
-                    checkmark: '#1F2937', // Dark gray for checkmarks
-                    buttonBg: {
-                        light: '#3B82F6', // Button background in light mode
-                        dark: '#1E40AF' // Button background in dark mode
-                    },
-                    buttonHover: {
-                        light: '#2563EB', // Hover state for light mode
-                        dark: '#1C3AA9' // Hover state for dark mode
-                    },
-                    dashboardText: {
-                        light: '#374151', // Visible text color in light mode
-                        dark: '#E5E7EB' // Visible text color in dark mode
-                    },
-                    textPrimary: {
-                        light: '#1D4ED8', // Vibrant blue in light mode
-                        dark: '#93C5FD' // Lighter blue in dark mode
-                    }
-                }
-            }
-        }
+          extend: {
+            colors: {
+              bgPrimary: "var(--bg-primary)",
+              panel: "var(--bg-panel)",
+              checkbox: "#9CA3AF",
+              checkmark: "#1F2937",
+              primary: {
+                light: "#2563EB",
+                dark: "#93C5FD",
+              },
+              buttonBg: {
+                light: "#3B82F6",
+                dark: "#1E40AF",
+              },
+              buttonHover: {
+                light: "#2563EB",
+                dark: "#1C3AA9",
+              },
+              dashboardText: {
+                light: "#374151",
+                dark: "#E5E7EB",
+              },
+              textPrimary: {
+                light: "#1D4ED8",
+                dark: "#93C5FD",
+              },
+            },
+          },
+        },
       };
     </script>
     <style>
-        :root {
-            /* Light Mode Colors */
-            --bg-primary: #f9fafb; /* Subtle light background for the body */
-            --bg-panel: #ffffff; /* Clean white for panels */
-            --text-color: #333333; /* Dark gray for readable text */
-            --button-bg: #1a73e8; /* Google blue for buttons */
-            --button-hover-bg: #1558b0; /* Darker blue for hover */
-            --chat-bubble-bg: #e8f0fe; /* Light blue for chat bubbles */
-            --chat-bubble-user-bg: #dce6f1; /* Slightly muted blue for user messages */
-            --input-bg: #ffffff; /* White background for input */
-            --input-text-color: #333333; /* Dark text for input */
-            --border-color: #e0e0e0; /* Light border color */
-            --shadow-color: rgba(0, 0, 0, 0.1); /* Subtle shadow color */
-        }
+      :root {
+        --bg-primary: #f9fafb;
+        --bg-panel: #ffffff;
+        --text-color: #333333;
+        --button-bg: #1a73e8;
+        --button-hover-bg: #1558b0;
+        --chat-bubble-bg: #e8f0fe;
+        --chat-bubble-user-bg: #dce6f1;
+        --input-bg: #ffffff;
+        --input-text-color: #333333;
+        --border-color: #e0e0e0;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+      }
 
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-color);
-            font-family: 'Roboto', sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
-            margin: 0;
-        }
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-color);
+        font-family: "Roboto", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0;
+      }
 
-        body.light-mode {
-            --bg-primary: #f9fafb;
-            --bg-panel: #ffffff;
-            --text-color: #333333;
-            --button-bg: #1a73e8;
-            --button-hover-bg: #1558b0;
-            --chat-bubble-bg: #e8f0fe;
-            --chat-bubble-user-bg: #dce6f1;
-            --input-bg: #ffffff;
-            --input-text-color: #333333;
-            --border-color: #e0e0e0;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-        }
+      body.light-mode {
+        --bg-primary: #f9fafb;
+        --bg-panel: #ffffff;
+        --text-color: #333333;
+        --button-bg: #1a73e8;
+        --button-hover-bg: #1558b0;
+        --chat-bubble-bg: #e8f0fe;
+        --chat-bubble-user-bg: #dce6f1;
+        --input-bg: #ffffff;
+        --input-text-color: #333333;
+        --border-color: #e0e0e0;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+      }
 
-        body.dark-mode {
-            /* Dark Mode Colors */
-            --bg-primary: #22262b;
-            --bg-panel: #37383b;
-            --text-color: #f0f0f0;
-            --button-bg: #3a3a3c;
-            --button-hover-bg: #444;
-            --chat-bubble-bg: #444;
-            --chat-bubble-user-bg: #3a3a3c;
-            --input-bg: #3a3a3c;
-            --input-text-color: #f0f0f0;
-            --border-color: #555;
-            --shadow-color: rgba(0, 0, 0, 0.5);
-        }
+      body.dark-mode {
+        --bg-primary: #22262b;
+        --bg-panel: #37383b;
+        --text-color: #f0f0f0;
+        --button-bg: #3a3a3c;
+        --button-hover-bg: #444;
+        --chat-bubble-bg: #444;
+        --chat-bubble-user-bg: #3a3a3c;
+        --input-bg: #3a3a3c;
+        --input-text-color: #f0f0f0;
+        --border-color: #555;
+        --shadow-color: rgba(0, 0, 0, 0.5);
+      }
 
-        /* Custom checkbox */
-        input[type="checkbox"] {
-            -webkit-appearance: none;
-            appearance: none;
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 2px 4px var(--shadow-color);
-            transition: background-color 0.3s, transform 0.2s;
-        }
-        input[type="checkbox"]:checked {
-            background-color: var(--button-bg);
-            transform: scale(1.1);
-        }
-        input[type="checkbox"]:checked::after {
-            content: '\2713'; /* Checkmark */
-            color: var(--text-color);
-            font-weight: bold;
-            font-size: 14px;
-        }
+      input[type="checkbox"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: var(--bg-panel);
+        border: 1px solid var(--border-color);
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px var(--shadow-color);
+        transition: background-color 0.3s, transform 0.2s;
+      }
+      input[type="checkbox"]:checked {
+        background-color: var(--button-bg);
+        transform: scale(1.1);
+      }
+      input[type="checkbox"]:checked::after {
+        content: "\2713";
+        color: var(--text-color);
+        font-weight: bold;
+        font-size: 14px;
+      }
 
-        /* Modal Background */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+      }
 
-        /* Modal Content */
-        .modal-content {
-            background-color: var(--bg-panel);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px var(--shadow-color);
-            width: 400px;
-        }
+      .modal-content {
+        background-color: var(--bg-panel);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        width: 400px;
+      }
 
-        /* Panel Styles */
-        #leftPanel,
-        #collapsedPanel,
-        #rightPanel {
-            margin: 10px;
-            padding: 15px;
-            background-color: var(--bg-panel);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 8px var(--shadow-color);
-            transition: transform 0.3s;
-        }
+      #leftPanel,
+      #collapsedPanel,
+      #rightPanel {
+        margin: 10px;
+        padding: 15px;
+        background-color: var(--bg-panel);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 8px var(--shadow-color);
+        transition: transform 0.3s;
+      }
 
-        #collapsedPanel {
-            flex-direction: column;
-            align-items: center;
-        }
+      #collapsedPanel {
+        flex-direction: column;
+        align-items: center;
+      }
 
-        #collapsedPanel:hover {
-            transform: translateY(-5px);
-        }
+      #collapsedPanel:hover {
+        transform: translateY(-5px);
+      }
 
-        #collapsedPanel .pdf-icon {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            margin-bottom: 10px;
-            background: linear-gradient(145deg, #1a73e8, #1558b0);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+      #collapsedPanel .pdf-icon {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 10px;
+        background: linear-gradient(145deg, #1a73e8, #1558b0);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
 
-        /* Chat Bubble Styling */
-        .chat-bubble {
-            max-width: 75%;
-            padding: 12px 18px;
-            margin-bottom: 10px;
-            font-size: 15px;
-            line-height: 1.6;
-            background-color: var(--chat-bubble-bg);
-            border-radius: 16px;
-            color: var(--text-color);
-            box-shadow: 0 4px 6px var(--shadow-color);
-            word-wrap: break-word;
-            transition: background-color 0.3s;
-        }
+      .chat-bubble {
+        max-width: 75%;
+        padding: 12px 18px;
+        margin-bottom: 10px;
+        font-size: 15px;
+        line-height: 1.6;
+        background-color: var(--chat-bubble-bg);
+        border-radius: 16px;
+        color: var(--text-color);
+        box-shadow: 0 4px 6px var(--shadow-color);
+        word-wrap: break-word;
+        transition: background-color 0.3s;
+      }
 
-        .chat-bubble.user {
-            align-self: flex-end;
-            background-color: var(--chat-bubble-user-bg);
-        }
+      .chat-bubble.user {
+        align-self: flex-end;
+        background-color: var(--chat-bubble-user-bg);
+      }
 
-        .chat-bubble.ai {
-            align-self: flex-start;
-        }
+      .chat-bubble.ai {
+        align-self: flex-start;
+      }
 
-        #chatArea {
-            margin: 10px;
-            padding: 20px;
-            background-color: var(--bg-panel);
-            border-radius: 16px;
-            overflow-y: auto;
-            box-shadow: inset 0 4px 6px var(--shadow-color);
-        }
+      #chatArea {
+        margin: 10px;
+        padding: 20px;
+        background-color: var(--bg-panel);
+        border-radius: 16px;
+        overflow-y: auto;
+        box-shadow: inset 0 4px 6px var(--shadow-color);
+      }
 
-        /* Common Button Styling */
-        .btn-add-pdf,
-        .btn-add-pdf-minimal {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-            background: linear-gradient(145deg, var(--button-bg), var(--button-hover-bg));
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.3s;
-        }
+      .btn-add-pdf,
+      .btn-add-pdf-minimal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 14px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        background: linear-gradient(
+          145deg,
+          var(--button-bg),
+          var(--button-hover-bg)
+        );
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.3s;
+      }
 
-        .btn-add-pdf:hover,
-        .btn-add-pdf-minimal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px var(--shadow-color);
-        }
+      .btn-add-pdf:hover,
+      .btn-add-pdf-minimal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px var(--shadow-color);
+      }
 
-        /* Input Styling */
-        input[type="text"] {
-            background-color: var(--input-bg);
-            color: var(--input-text-color);
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 100%;
- box-shadow: inset 0 2px 4px var(--shadow-color);
-            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
-        }
-        input[type="text"]:focus {
-            outline: none;
-            box-shadow: 0 0 6px var(--button-bg);
-        }
+      input[type="text"] {
+        background-color: var(--input-bg);
+        color: var(--input-text-color);
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 100%;
+        box-shadow: inset 0 2px 4px var(--shadow-color);
+        transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        box-shadow: 0 0 6px var(--button-bg);
+      }
 
-        /* Navbar Styles */
-        header {
-            background-color: var(--bg-panel);
-            color: var(--text-color);
-            padding: 20px;
-            box-shadow: 0 4px 6px var(--shadow-color);
-        }
+      header {
+        background-color: var(--bg-panel);
+        color: var(--text-color);
+        padding: 20px;
+        box-shadow: 0 4px 6px var(--shadow-color);
+      }
+
+      body.light-mode #citationList .link {
+        color: var(--text-color) !important;
+    }
+    #citationList {
+    background-color: var(--bg-panel);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container, #citationList {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  transition: border-color 0.3s;
+}
+button.copy-button {
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button.copy-button:hover {
+  background-color: var(--button-hover-bg);
+}
+
+.citation-container {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
+
+  .citation-container a {
+    display: inline-block;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+
+  .citation-container i {
+    vertical-align: middle;
+  }
+
+  .dark-mode .citation-container a {
+    color: #93C5FD;
+  }
+
+  .light-mode .citation-container a {
+    color: #1D4ED8;
+  }
+
+  .file-name {
+    color: var(--text-color);
+  }
+
+  .dark-mode .file-name {
+    color: #f0f0f0;
+  }
+
+  .light-mode .file-name {
+    color: #333333;
+  }
+
+  .theme-icon {
+    color: var(--text-color);
+  }
+
+  .dark-mode .theme-icon {
+    color: #f0f0f0;
+  }
+
+  .light-mode .theme-icon {
+    color: #333333;
+  }
+
+  .messenger-icon {
+    color: var(--text-color);
+  }
+
+  .dark-mode .messenger-icon {
+    color: #f0f0f0;
+  }
+
+  .light-mode .messenger-icon {
+    color: #333333;
+  }
+
     </style>
-</head>
-<body class="light-mode">
+  </head>
+  <body class="light-mode">
     <header class="sticky top-0 z-50 shadow-md transition-colors duration-300">
-        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <img 
-                    src="{{ url_for('static', filename='min_ai_logo.jpg') }}" 
-                    alt="MinnAI Logo" 
-                    class="h-10 w-10 rounded-full object-cover"
-                >
-                <span class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500">
-                    MinnAI
-                </span>
-            </div>
-
-            <nav class="flex items-center space-x-4">
-                <button 
-                    id="theme-toggle" 
-                    class="
-                        p-2 
-                        rounded-full 
-                        transition-colors 
-                        duration-300 
-                        focus:outline-none 
-                        bg-gray-100 
-                        hover:bg-gray-200 
-                        dark:bg-gray-700 
-                        dark:hover:bg-gray-600
-                    "
-                >
-                    <i 
-                        id="theme-icon" 
-                        class="
-                            fas 
-                            transition-colors 
-                            duration-300 
-                            fa-moon
-                            text-gray-800 
-                            dark:text-gray-200
-                        "
-                    ></i>
-                </button>
-
-                <div class="relative group">
-                    <button
-                        id="userDropdown"
-                        class="
-                            flex 
-                            items-center 
-                            space-x-2 
-                            bg-blue-50 
-                            text-blue-600 
-                            px-4 
-                            py-2 
-                            rounded-full 
-                            hover:bg-blue-100 
-                            transition-colors 
-                            duration-300 
-                            dark:bg-blue-900 
-                            dark:text-blue-300 
-                            dark:hover:bg-blue-800
-                        "
-                    >
-                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ user['name'] }}</span>
-                        <svg
-                            class="w-4 h-4 ml-1 text-gray-800 dark:text-gray-200"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
-                    </button>
-
-                    <div
-                        class="
-                            absolute 
-                            right-0 
-                            top-full 
-                            mt-2 
-                            w-48 
-                            bg-white 
-                            rounded-lg 
-                            shadow-lg 
-                            hidden 
-                            group-hover:block 
-                            transition-all 
-                            duration-300 
-                            
-                        "
-                    >
-                        <a 
-                            href="/dashboard" 
-                            class="
-                                block 
-                                px-4 
-                                py-2 
-                                text-gray-700 
-                                hover:bg-gray-100 
-                                transition-colors 
-                                duration-300 
-                                
-                            "
-                        >
-                            Dashboard
-                        </a>
-                        <a 
-                            href="/logout" 
-                            class="
-                                block 
-                                px-4 
-                                py-2 
-                                text-red-600 
-                                hover:bg-gray-100 
-                                transition-colors 
-                                duration-300 
-                              
-                            "
-                        >
-                            Logout
-                        </a>
-                    </div>
-                </div>
-            </nav>
+      <div
+        class="container mx-auto px-4 py-3 flex items-center justify-between"
+      >
+        <div class="flex items-center space-x-4">
+          <a href="{{ url_for('root') }}">
+            <img
+              src="{{ url_for('static', filename='min_ai_logo.jpg') }}"
+              alt="MinnAI Logo"
+              class="h-10 w-10 rounded-full object-cover"
+            />
+          </a>
+          <span
+            class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500"
+          >
+            MinnAI
+          </span>
         </div>
+
+        <nav class="flex items-center space-x-4">
+          <a
+            href="{{ url_for('root') }}"
+            class="px-4 py-2 rounded-full transition-colors duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+          >
+            Home
+          </a>
+          <button
+            id="theme-toggle"
+            class="p-2 rounded-full transition-colors duration-300 focus:outline-none bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+          >
+            <i
+              id="theme-icon"
+              class="fas transition-colors duration-300 fa-moon text-gray-800 dark:text-gray-200"
+            ></i>
+          </button>
+
+          <div class="relative group">
+            <button
+              id="userDropdown"
+              class="flex items-center space-x-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors duration-300 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+            >
+              <span class="font-medium text-gray-800 dark:text-gray-200"
+                >{{ user['name'] }}</span
+              >
+              <svg
+                class="w-4 h-4 ml-1 text-gray-800 dark:text-gray-200"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+
+            <div
+              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block transition-all duration-300"
+            >
+              <a
+                href="/dashboard"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors duration-300"
+              >
+                Dashboard
+              </a>
+              <a
+                href="/logout"
+                class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors duration-300"
+              >
+                Logout
+              </a>
+            </div>
+          </div>
+        </nav>
+      </div>
     </header>
 
     <div class="flex h-screen">
-    <!-- Left Panel: Sources -->
-    <div id="leftPanel" class="w-1/4 bg-panel p-4 border-r border-gray-700 transition-all duration-300">
+      <!-- Left Panel: Sources -->
+      <div
+        id="leftPanel"
+        class="w-1/4 bg-panel p-4 border-r border-gray-700 transition-all duration-300"
+      >
         <div class="flex items-center justify-between mb-4">
-            <h1 class="text-lg font-semibold">Sources</h1>
-            <div id="collapser">
-                <i class="fas fa-angle-left"></i>
-            </div>
+          <h1 class="text-lg font-semibold">Upload Documents</h1>
+          <div id="collapser">
+            <i class="fas fa-angle-left"></i>
+          </div>
         </div>
-        <button id="uploadButton" class="btn-add-pdf w-full">Add PDF</button>
+        <button id="uploadButton" class="btn-add-pdf w-full">
+          Add Documents
+        </button>
         <div id="sourceList" class="mt-4 space-y-3">
-            <div class="flex items-center justify-between">
-                <span>Select all sources</span>
-                <input type="checkbox" id="selectAll" />
-            </div>
+          <div id="selectAllContainer" class="flex items-center justify-between hidden">
+            <span>Select all documents</span>
+            <input type="checkbox" id="selectAll" />
+          </div>
         </div>
-    </div>
+        <div id="citationContainer" class="relative mt-4">
+          <!-- Flex container for citation button with dynamic arrow -->
+          <div class="flex items-center justify-between mb-4">
+            <h1 class="text-lg font-semibold">References</h1>
+            <div id="citationToggle" class="flex items-center cursor-pointer">
+              <span class="text-sm font-medium">View References</span>
+              <i
+                id="citationArrow"
+                class="ml-2 fas fa-angle-right transition-transform duration-300"
+              ></i>
+            </div>
+          </div>
 
-    <!-- Collapsed Left Panel -->
-    <div id="collapsedPanel" class="hidden bg-panel w-12 flex flex-col items-center py-4 space-y-4 border-r border-gray-700">
+          <!-- Dropdown content (Citations list) -->
+          <div
+            id="citationDropdown"
+            class="hidden mt-2 p-4 rounded-lg max-w-sm">
+            <ul id="citationList" class="space-y-2 text-sm">
+              <!-- Dynamically generated citations will appear here -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsed Left Panel -->
+      <div
+        id="collapsedPanel"
+        class="hidden bg-panel w-12 flex flex-col items-center py-4 space-y-4 border-r border-gray-700"
+      >
         <button id="addPdfCollapsed" class="text-gray-400 hover:text-gray-200">
-            <i class="fas fa-angle-right"></i>
+          <i class="fas fa-angle-right"></i>
         </button>
         <button id="uploadButton2" class="btn-add-pdf-minimal w-full">+</button>
         <div id="checkedItems" class="space-y-2 text-center text-sm"></div>
-    </div>
+      </div>
 
-   
-<!-- Right Panel: Chat Section -->
-<div id="rightPanel" class="w-3/4 flex flex-col ml-4 bg-panel transition-colors duration-300">
-    <div class="bg-panel p-4 flex justify-between items-center border-b border-gray-700">
-        <h1 class="text-xl font-semibold ">Minn Chat</h1>
-    </div>
-    <div id="chatArea" class="flex-1 overflow-y-auto p-4 space-y-4 bg-panel transition-colors duration-300"></div>
-    <div class="p-4 bg-panel border-t border-gray-700 sticky bottom-0 transition-colors duration-300">
-        <div class="flex">
-            <input id="chatInput" type="text" placeholder="Start typing..." class="w-full p-2 bg-gray-800 rounded-l text-white outline-none transition-colors duration-300" />
-            <button id="submitSources" class="bg-buttonBlue p-2 rounded-r text-white hover:bg-buttonHover transition-colors duration-300">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+      <!-- Right Panel: Chat Section -->
+      <div
+        id="rightPanel"
+        class="w-3/4 flex flex-col ml-4 bg-panel transition-colors duration-300"
+      >
+        <div
+          class="bg-panel p-4 flex justify-between items-center border-b border-gray-700"
+        >
+          <h1 class="text-xl font-semibold">Minn Chat</h1>
         </div>
-    </div>
-</div>
+        <div
+          id="chatArea"
+          class="flex-1 overflow-y-auto p-4 space-y-4 bg-panel transition-colors duration-300"
+        ></div>
+        <div
+          class="p-4 bg-panel border-t border-gray-700 sticky bottom-0 transition-colors duration-300"
+        >
+          <div class="flex">
+            <input
+              id="chatInput"
+              type="text"
+              placeholder="Start typing..."
+              class="w-full p-2 bg-gray-800 rounded-l text-white outline-none transition-colors duration-300"
+            />
+            <button
+              id="submitSources"
+              class="bg-buttonBlue p-2 rounded-r text-white hover:bg-buttonHover transition-colors duration-300"
+            >
+              <i class="fas fa-paper-plane messenger-icon"></i>
+            </button>
+          </div>
+        </div>
+      </div>
 
-<!-- Add Sources Modal -->
-<div id="uploadModal" class="fixed inset-0 flex items-center justify-center hidden">
-    <div class="rounded-lg shadow-lg p-6 w-full max-w-2xl relative transition-colors duration-300" style="background-color: var(--bg-panel);">
-        <div class="flex justify-between items-center mb-4">
+      <!-- Add Sources Modal -->
+      <div
+        id="uploadModal"
+        class="fixed inset-0 flex items-center justify-center hidden"
+      >
+        <div
+          class="rounded-lg shadow-lg p-6 w-full max-w-2xl relative transition-colors duration-300"
+          style="background-color: var(--bg-panel)"
+        >
+          <div class="flex justify-between items-center mb-4">
             <div class="flex items-center">
-                <i class="fas fa-wifi" style="color: var(--text-color); text-xl mr-2;"></i>
-                <h2 class="text-2xl font-semibold" style="color: var(--text-color);">Minn-Ai</h2>
+              <i
+                class="fas fa-wifi text-xl mr-2"
+                style="color: var(--text-color)"
+              ></i>
+              <h2
+                class="text-2xl font-semibold"
+                style="color: var(--text-color)"
+              >
+                Minn-Ai
+              </h2>
             </div>
             <button id="closeModal" class="text-gray-400 hover:text-gray-200">
-                <i class="fas fa-times text-xl"></i>
+              <i class="fas fa-times text-xl"></i>
             </button>
-        </div>
+          </div>
 
-        <h2 class="text-2xl font-semibold mb-2" style="color: var(--text-color);">Add sources</h2>
-        <p class="mb-6" style="color: var(--text-color);">Sources let Minn-Ai base its responses on the information that matters most to you.</p>
+          <h2
+            class="text-2xl font-semibold mb-2"
+            style="color: var(--text-color)"
+          >
+            Add Documents
+          </h2>
+          <p class="mb-6" style="color: var(--text-color)">
+            documents let Minn-Ai base its responses on the information that
+            matters most to you.
+          </p>
 
-        <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center mb-6">
+          <div
+            class="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center mb-6"
+          >
             <i class="fas fa-upload text-gray-400 mb-4"></i>
-            <p class="text-xl font-semibold mb-2" style="color: var(--text-color);">Upload sources</p>
-            <input type="file" id="fileInput" class="hidden" multiple>
-            <label for="fileInput" class="text-blue-500 underline cursor-pointer">
-                Drag and drop or choose file to upload
+            <p
+              class="text-xl font-semibold mb-2"
+              style="color: var(--text-color)"
+            >
+              Upload documents
+            </p>
+            <input type="file" id="fileInput" class="hidden" multiple />
+            <label
+              for="fileInput"
+              class="text-blue-500 underline cursor-pointer"
+            >
+              Drag and drop or choose file to upload
             </label>
-            <p class="text-gray-400">Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3)</p>
-        </div>
+            <p class="text-gray-400">Supported file types: PDF, DOCX</p>
+          </div>
 
-        <div class="flex items-center">
+          <div class="flex items-center">
             <i class="fas fa-database text-gray-400 mr-2"></i>
             <div class="w-full bg-gray-700 rounded-full h-2">
-                <div id="progressBar" class="bg-blue-500 h-2 rounded-full" style="width: 0%;"></div>
+              <div
+                id="progressBar"
+                class="bg-blue-500 h-2 rounded-full"
+                style="width: 0%"
+              ></div>
             </div>
             <span id="fileCount" class="ml-2 text-gray-400">0/50</span>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-</div>
-<script>
-document.getElementById('theme-toggle').addEventListener('click', function() {
-    document.body.classList.toggle('dark-mode');
-    document.body.classList.toggle('light-mode');
-    
-    // Change the icon based on the theme
-    const themeIcon = document.getElementById('theme-icon');
-    if (document.body.classList.contains('dark-mode')) {
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
-    } else {
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon')
-    }
-});
-</script>
-<!-- <script>
-    // Light/Dark Mode Toggle
-    const modeToggle = document.getElementById('theme-toggle');
-    const toggleIcon = document.getElementById('theme-icon');
-    const htmlElement = document.documentElement;
-
-    // Set initial theme from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    const isLightMode = savedTheme === 'light';
-
-    if (isLightMode) {
-        document.body.classList.add('light-mode');
-        htmlElement.classList.remove('dark');
-    } else {
-        document.body.classList.add('dark-mode');
-        htmlElement.classList.add('dark');
-    }
-
-    // Event listener for toggle button
-    modeToggle.addEventListener('click', () => {
-        const isCurrentlyLightMode = htmlElement.classList.contains('dark');
-
-        if (isCurrentlyLightMode) {
-            // Switch to Light Mode
-            htmlElement.classList.remove('dark');
-            document.body.classList.add('light-mode');
-            document.body.classList.remove('dark-mode');
-            localStorage.setItem('theme', 'light');
-        } else {
-            // Switch to Dark Mode
-            htmlElement.classList.add('dark');
-            document.body.classList.add('dark-mode');
-            document.body.classList.remove('light-mode');
-            localStorage.setItem('theme', 'dark');
-        }
-
-        // Toggle specific element classes
-        document.querySelectorAll('#leftPanel, #collapsedPanel, #rightPanel').forEach(panel => {
-            panel.classList.toggle('light-mode', !isCurrentlyLightMode);
-            panel.classList.toggle('dark-mode', isCurrentlyLightMode);
+    <script>
+      document
+        .getElementById("theme-toggle")
+        .addEventListener("click", function () {
+          document.body.classList.toggle("dark-mode");
+          document.body.classList.toggle("light-mode");
+          const themeIcon = document.getElementById("theme-icon");
+          if (document.body.classList.contains("dark-mode")) {
+            themeIcon.classList.remove("fa-moon");
+            themeIcon.classList.add("fa-sun");
+          } else {
+            themeIcon.classList.remove("fa-sun");
+            themeIcon.classList.add("fa-moon");
+          }
+        isDarkMode = document.body.classList.contains("dark-mode"); // Check theme
         });
+    </script>
 
-        document.querySelectorAll('.chat-bubble').forEach(bubble => {
-            bubble.classList.toggle('light-mode', !isCurrentlyLightMode);
-            bubble.classList.toggle('dark-mode', isCurrentlyLightMode);
-        });
+    <script>
+      const uploadButton = document.getElementById("uploadButton");
+      const uploadButton2 = document.getElementById("uploadButton");
+      const uploadModal = document.getElementById("uploadModal");
+      const closeModal = document.getElementById("closeModal");
+      const fileInput = document.getElementById("fileInput");
+      const sourceList = document.getElementById("sourceList");
+      const selectAllContainer = document.getElementById("selectAllContainer");
+      const submitSources = document.getElementById("submitSources");
+      const selectAll = document.getElementById("selectAll");
+      const progressBar = document.getElementById("progressBar");
+      const fileCount = document.getElementById("fileCount");
+      const chatInput = document.getElementById("chatInput");
 
-        document.querySelectorAll('.btn-add-pdf, .btn-add-pdf-minimal').forEach(button => {
-            button.classList.toggle('light-mode', !isCurrentlyLightMode);
-            button.classList.toggle('dark-mode', isCurrentlyLightMode);
-        });
+      var isDarkMode = document.body.classList.contains("dark-mode"); // Check theme
+      const uploadedFiles = new Map();
 
-        // Update toggle icon
-        toggleIcon.classList.toggle('fa-sun', !isCurrentlyLightMode);
-        toggleIcon.classList.toggle('fa-moon', isCurrentlyLightMode);
-    });
-</script> -->
+      function addUserMessage(message) {
+        const chatArea = document.getElementById("chatArea");
+        const userBubble = document.createElement("div");
+        userBubble.className = "chat-bubble user";
+        userBubble.textContent = message;
+        chatArea.appendChild(userBubble);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
 
-<script>
-    const uploadButton = document.getElementById('uploadButton');
-    const uploadButton2 = document.getElementById('uploadButton');
-    const uploadModal = document.getElementById('uploadModal');
-    const closeModal = document.getElementById('closeModal');
-    const fileInput = document.getElementById('fileInput');
-    const sourceList = document.getElementById('sourceList');
-    const submitSources = document.getElementById('submitSources');
-    const selectAll = document.getElementById('selectAll');
-    const progressBar = document.getElementById('progressBar');
-    const fileCount = document.getElementById('fileCount');
-    const chatInput = document.getElementById('chatInput');
+      function addAIMessage(message) {
+        const chatArea = document.getElementById("chatArea");
+        const aiBubble = document.createElement("div");
+        aiBubble.className = "chat-bubble ai";
+        aiBubble.innerHTML = message;
+        chatArea.appendChild(aiBubble);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
 
-    const uploadedFiles = new Map(); // Use a Map to store files by name
+      uploadButton.onclick = () => {
+        uploadModal.style.display = "flex";
+      };
 
+      closeModal.onclick = () => {
+        uploadModal.style.display = "none";
+      };
 
-    // Add a user message bubble
-function addUserMessage(message) {
-    const chatArea = document.getElementById('chatArea');
-    const userBubble = document.createElement('div');
-    userBubble.className = 'chat-bubble user';
-    userBubble.textContent = message;
-    chatArea.appendChild(userBubble);
-    chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-// Add an AI message bubble with formatting
-function addAIMessage(message) {
-    const chatArea = document.getElementById('chatArea');
-    const aiBubble = document.createElement('div');
-    aiBubble.className = 'chat-bubble ai';
-    aiBubble.innerHTML = message; // Use innerHTML to retain formatting
-    chatArea.appendChild(aiBubble);
-    chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-    // Open the modal
-    uploadButton.onclick = () => {
-        uploadModal.style.display = 'flex';
-    };
-
-    // Close the modal
-    closeModal.onclick = () => {
-        uploadModal.style.display = 'none';
-    };
-
-    // Handle file selection
-    fileInput.onchange = () => {
-        const files = Array.from(fileInput.files); // Convert FileList to Array
+      fileInput.onchange = () => {
+        const files = Array.from(fileInput.files);
 
         for (const file of files) {
-            if (!uploadedFiles.has(file.name)) {
-                uploadedFiles.set(file.name, file); // Store the actual File object
-                addSourceToList(file.name); // Add file name to the UI
-            }
+          if (!uploadedFiles.has(file.name)) {
+            uploadedFiles.set(file.name, file);
+            addSourceToList(file.name);
+          }
         }
 
-        // Update progress bar
         const progressPercentage = (uploadedFiles.size / 50) * 100;
         progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
         fileCount.textContent = `${uploadedFiles.size}/50`;
 
-        // Reset file input
-        fileInput.value = '';
-    };
+        if (uploadedFiles.size > 0) {
+          selectAllContainer.classList.remove("hidden");
+        } else {
+          selectAllContainer.classList.add("hidden");
+        }
 
-    // Add source to the list
-    function addSourceToList(fileName) {
-        const sourceItem = document.createElement('div');
-        sourceItem.className = 'flex items-center justify-between my-2';
+        fileInput.value = "";
+      };
+
+      function addSourceToList(fileName) {
+        const sourceItem = document.createElement("div");
+        sourceItem.className = "flex items-center justify-between my-2";
         sourceItem.innerHTML = `
             <div class="flex items-center">
                 <img src="https://img.icons8.com/color/48/pdf.png" alt="PDF Icon" class="w-5 h-5 mr-2" />
-                <span class="text-sm text-gray-300">${fileName}</span>
+                <span class="text-sm file-name">${fileName}</span>
             </div>
             <input type="checkbox" value="${fileName}" class="form-checkbox text-blue-500" />
         `;
         sourceList.appendChild(sourceItem);
-    }
+      }
 
-    // Select all checkboxes
-    selectAll.onchange = () => {
-        const checkboxes = sourceList.querySelectorAll('input[type=checkbox]');
-        checkboxes.forEach(cb => cb.checked = selectAll.checked);
-    };
+      selectAll.onchange = () => {
+        const checkboxes = sourceList.querySelectorAll("input[type=checkbox]");
+        checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
+      };
 
-function handleSubmission() {
-    const selectedFiles = [];
-    const formData = new FormData();
+      function handleSubmission() {
+        const selectedFiles = [];
+        const formData = new FormData();
 
-    // Get selected files
-    sourceList.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
-        const file = uploadedFiles.get(cb.value); // Get the file object by name
-        if (file) selectedFiles.push(file);
-    });
+        sourceList
+          .querySelectorAll("input[type=checkbox]:checked")
+          .forEach((cb) => {
+            const file = uploadedFiles.get(cb.value);
+            if (file) selectedFiles.push(file);
+          });
 
-    const userQuestion = chatInput.value.trim();
+        const userQuestion = chatInput.value.trim();
 
-    // Basic validations
-    if (!userQuestion) {
-        alert('Please enter a question.');
-        return;
-    }
+        if (!userQuestion) {
+          alert("Please enter a question.");
+          return;
+        }
 
-    // Add user's message bubble
-    addUserMessage(userQuestion);
+        addUserMessage(userQuestion);
+        chatInput.value = "";
 
-    // File size check (example: 50MB limit)
-    for (let file of selectedFiles) {
-        if (file.size > 50 * 1024 * 1024) {  // 50MB size limit
+        for (let file of selectedFiles) {
+          if (file.size > 50 * 1024 * 1024) {
             alert("File size exceeds the limit of 50MB");
             return;
+          }
+          formData.append("files", file);
         }
-        formData.append('files', file); // Append actual File objects
-    }
-    formData.append('question', userQuestion);
+        formData.append("question", userQuestion);
 
-    // Add AI loading bubble
-    const chatArea = document.getElementById('chatArea');
-    const loadingBubble = document.createElement('div');
-    loadingBubble.className = 'chat-bubble ai loading';
-    loadingBubble.innerHTML = `
+        const chatArea = document.getElementById("chatArea");
+        const loadingBubble = document.createElement("div");
+        loadingBubble.className = "chat-bubble ai loading";
+        loadingBubble.innerHTML = `
         <span class="dot"></span>
         <span class="dot"></span>
         <span class="dot"></span>
     `;
-    chatArea.appendChild(loadingBubble);
-    chatArea.scrollTop = chatArea.scrollHeight;
+        chatArea.appendChild(loadingBubble);
+        chatArea.scrollTop = chatArea.scrollHeight;
 
-    // API call
-    fetch('/upload', {
-        method: 'POST',
-        body: formData,
-    })
-        .then(response => {
+        fetch("/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => {
             if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(`Failed to submit files: ${err.message || err}`);
-                });
+              return response.json().then((err) => {
+                throw new Error(
+                  `Failed to submit files: ${err.message || err}`
+                );
+              });
             }
-            return response.json(); // Assuming the API response is in JSON format
-        })
-        .then(data => {
-            // Remove loading bubble
+            return response.json();
+          })
+          .then((data) => {
             chatArea.removeChild(loadingBubble);
 
-            // Add AI's response bubble with formatted content
             if (data.response) {
-                addAIMessage(data.response.replace(/\n/g, '<br>')); // Replace line breaks for HTML rendering
-            } else {
-                addAIMessage("No response text received.");
-            }
-            chatInput.value = '';  // Clear input after successful response
-        })
-        .catch(error => {
-            console.error('Error:', error);
+              addAIMessage(data.response.replace(/\n/g, "<br>"));
 
-            // Remove loading bubble
+              // Add citations if available
+              if (data.citations && Array.isArray(data.citations)) {
+                addCitations(data.citations);
+              }
+            } else {
+              addAIMessage("No response text received.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+
             chatArea.removeChild(loadingBubble);
 
-            // Add error message bubble
-            const errorBubble = document.createElement('div');
-            errorBubble.className = 'bg-red-600 text-white p-2 rounded-lg self-start max-w-xs mb-2';
-            errorBubble.textContent = 'There was an error processing your request. Please try again.' + error;
+            const errorBubble = document.createElement("div");
+            errorBubble.className =
+              "bg-red-600 text-white p-2 rounded-lg self-start max-w-xs mb-2";
+            errorBubble.textContent =
+              "There was an error processing your request. Please try again.";
             chatArea.appendChild(errorBubble);
-            chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the latest message
+            chatArea.scrollTop = chatArea.scrollHeight;
+          });
+      }
+
+      document
+        .getElementById("citationToggle")
+        .addEventListener("click", function () {
+          const dropdown = document.getElementById("citationDropdown");
+          const arrow = document.getElementById("citationArrow");
+
+          dropdown.classList.toggle("hidden");
+
+          if (dropdown.classList.contains("hidden")) {
+            arrow.classList.replace("fa-angle-down", "fa-angle-right");
+          } else {
+            arrow.classList.replace("fa-angle-right", "fa-angle-down");
+          }
         });
+
+        let currentCitations = []; // Store citations globally for re-rendering
+
+        // Add citations dynamically
+function addCitations(citations) {
+  const citationList = document.getElementById("citationList");
+  citationList.innerHTML = ""; // Clear previous citations
+
+  if (citations.length === 0) {
+    citationList.innerHTML = "<li>No citations available.</li>";
+    return;
+  }
+
+  // Check theme dynamically inside the function
+  const isDarkMode = document.body.classList.contains("dark-mode");
+
+  citations.forEach((citation) => {
+    const listItem = document.createElement("li");
+    listItem.className = "flex items-center justify-between space-x-2 citation-container";
+
+    const link = document.createElement("a");
+    link.href = citation;
+    link.target = "_blank";
+    link.className = `underline hover:text-primary ${
+      isDarkMode ? "text-white" : "text-black"
+    }`;
+    link.textContent = citation;
+
+    const copyIcon = document.createElement("i");
+    copyIcon.className = `fas fa-copy cursor-pointer ${
+      isDarkMode ? "text-gray-200 hover:text-gray-400" : "text-gray-800 hover:text-gray-600"
+    }`;
+    copyIcon.addEventListener("click", () => {
+      navigator.clipboard.writeText(citation).then(() => {
+        alert("Citation copied to clipboard!");
+      });
+    });
+
+    listItem.appendChild(link);
+    listItem.appendChild(copyIcon);
+    citationList.appendChild(listItem);
+  });
+
+  citationList.classList.add("space-y-2", "flex", "flex-col", "justify-between");
 }
 
-// CSS for the loading animation
-const style = document.createElement('style');
-style.textContent = `
+      function getCopyButtonClasses() {
+        // Check if the current theme is dark or light
+        if (document.body.classList.contains("dark-mode")) {
+          return "px-2 py-1 text-xs font-medium rounded bg-buttonBg-dark text-white hover:bg-buttonHover-dark";
+        } else {
+          return "px-2 py-1 text-xs font-medium rounded bg-buttonBg-light text-white hover:bg-buttonHover-light";
+        }
+      }
+
+      const style = document.createElement("style");
+      style.textContent = `
     .chat-bubble.ai.loading {
         display: flex;
         gap: 4px;
@@ -737,46 +875,40 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style);
+      document.head.appendChild(style);
 
-// Attach event listeners
-submitSources.onclick = handleSubmission;
-chatInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        event.preventDefault(); // Prevent default form submission if inside a form
-        handleSubmission();
-    }
-});
+      submitSources.onclick = handleSubmission;
+      chatInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSubmission();
+        }
+      });
 
+      function resetModal() {
+        uploadedFiles.clear();
+        sourceList.innerHTML = "";
+        progressBar.style.width = "0%";
+        fileCount.textContent = "0/50";
+        chatInput.value = "";
+        uploadModal.style.display = "none";
+      }
 
-    // Reset modal after successful submission
-    function resetModal() {
-        uploadedFiles.clear(); // Clear the Map
-        sourceList.innerHTML = '';
-        progressBar.style.width = '0%';
-        fileCount.textContent = '0/50';
-        chatInput.value = '';
-        uploadModal.style.display = 'none';
-    }
+      const leftPanel = document.getElementById("leftPanel");
+      const collapsedPanel = document.getElementById("collapsedPanel");
+      const addPdfCollapsed = document.getElementById("addPdfCollapsed");
 
+      document.getElementById("collapser").addEventListener("click", () => {
+        leftPanel.classList.add("hidden");
+        collapsedPanel.classList.remove("hidden");
+      });
 
-
-    //collapsing logic
-    const leftPanel = document.getElementById('leftPanel');
-    const collapsedPanel = document.getElementById('collapsedPanel');
-    const addPdfCollapsed = document.getElementById('addPdfCollapsed');
-
-    document.getElementById('collapser').addEventListener('click', () => {
-        leftPanel.classList.add('hidden');
-        collapsedPanel.classList.remove('hidden');
-    });
-
-    addPdfCollapsed.addEventListener('click', () => {
-        leftPanel.classList.remove('hidden');
-        collapsedPanel.classList.add('hidden');
-    });
-</script>
+      addPdfCollapsed.addEventListener("click", () => {
+        leftPanel.classList.remove("hidden");
+        collapsedPanel.classList.add("hidden");
+      });
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
-</body>
+  </body>
 </html>

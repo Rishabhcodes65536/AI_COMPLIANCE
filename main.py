@@ -14,13 +14,11 @@ from docx import Document
 from pymongo import MongoClient
 from datetime import datetime,timedelta
 from bson import ObjectId
+from bs4 import BeautifulSoup
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-
-initial_date = datetime(2024, 11, 1)  
-
-
+# Load environment variables
 load_dotenv()
 
 # Configuration
@@ -29,8 +27,17 @@ API_KEY = os.getenv('API_KEY')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
+MONGO_URI = os.getenv('MONGO_URI')
 URL = 'https://www.revisor.mn.gov/statutes/cite/245D/full'
+MODE = os.getenv('MODE', 'production')
 
+# Dummy user for test mode
+dummy_user = {
+    "name": "Tester",
+    "email": "tester@example.com",
+    "picture": "/static/default-profile.png",
+    "last_login": datetime.utcnow()
+}
 
 
 app = Flask(__name__)
@@ -47,17 +54,18 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 # MongoDB Setup
-client = MongoClient("mongodb+srv://jainrishabh32768:ZYsjkxK62VrO0Nqo@cluster0.h5cd0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Update with your MongoDB connection URI
+client = MongoClient(MONGO_URI)  # Use the MongoDB URI from the .env file
 db = client["test"]  # Replace with your database name
 users_collection = db["users"]
 chats_collection = db["chats"]
+hashes_collection = db["hashes"]
 
 
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile',
@@ -67,78 +75,69 @@ google = oauth.register(
 last_known_hash = None
 
 def fetch_webpage_content(url):
-
     try:
         response = requests.get(url)
         response.raise_for_status()
         app.logger.info("Webpage content fetched successfully.")
-
-        page_content = response.text
-        page_hash = hashlib.md5(page_content.encode('utf-8')).hexdigest()
-        last_modified = response.headers.get('Last-Modified')
-
-        if last_modified:
-            last_modified_time = datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S GMT")
-        else:
-            last_modified_time = None
-
-        return page_hash, last_modified_time
-
+        return response.text
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error fetching the page: {e}")
-        return None, None
+        return None
 
-
-
-
-# Routes
-@app.route('/', methods=['GET'])
-def root():
+def compute_merkle_root(content):
     """
-    Render the homepage with the user interface.
+    Compute the Merkle root hash of the given content.
     """
-    return render_template('new_ui.html')
+    soup = BeautifulSoup(content, 'html.parser')
+    text_blocks = [block.get_text() for block in soup.find_all(['p', 'div', 'span', 'li'])]
+    hashes = [hashlib.md5(block.encode('utf-8')).hexdigest() for block in text_blocks]
 
-@app.route('/home', methods=['GET'])
-def home():
-    """
-    Render the homepage with the user interface.
-    """
-    return render_template('new_ui.html')
+    while len(hashes) > 1:
+        if len(hashes) % 2 != 0:
+            hashes.append(hashes[-1])
+        new_hashes = []
+        for i in range(0, len(hashes), 2):
+            combined_hash = hashlib.md5((hashes[i] + hashes[i + 1]).encode('utf-8')).hexdigest()
+            new_hashes.append(combined_hash)
+        hashes = new_hashes
 
-
-@app.route('/ask', methods=['POST'])
-def ask():
-    """
-    Handle user questions and return the answer.
-    """
-    question = request.form.get('question')
-    answer = get_answer(question)
-    return render_template('answer.html', question=question, answer=answer)
+    return hashes[0] if hashes else None
 
 @app.route('/check-update', methods=['GET'])
 def check_update():
     """
     API endpoint to check if the tracked webpage has been updated.
     """
-    global last_known_hash
-
-    current_hash, last_modified_time = fetch_webpage_content(URL)
-
-    if current_hash is None:
+    content = fetch_webpage_content(URL)
+    if content is None:
         return jsonify({"error": "Failed to fetch the page."}), 500
 
+    current_merkle_root = compute_merkle_root(content)
+    if current_merkle_root is None:
+        return jsonify({"error": "Failed to compute Merkle root."}), 500
+
+    last_known_hash_doc = hashes_collection.find_one({"url": URL})
+    last_known_hash = last_known_hash_doc['hash'] if last_known_hash_doc else None
+
     current_date = datetime.now()
+    initial_date = last_known_hash_doc['last_checked'] if last_known_hash_doc else current_date
     date_range = f"From {initial_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
 
     if last_known_hash is None:
-        last_known_hash = current_hash
+        hashes_collection.update_one(
+            {"url": URL},
+            {"$set": {"hash": current_merkle_root, "last_checked": current_date}},
+            upsert=True
+        )
         return jsonify({
             "message": "Initial check completed, no changes detected.",
             "date_range": date_range
         }), 200
-    elif current_hash != last_known_hash:
-        last_known_hash = current_hash
+    elif current_merkle_root != last_known_hash:
+        hashes_collection.update_one(
+            {"url": URL},
+            {"$set": {"hash": current_merkle_root, "last_checked": current_date}}
+        )
         return jsonify({
             "message": "The webpage has been updated.",
             "date_range": date_range
@@ -148,7 +147,32 @@ def check_update():
             "message": "No changes detected.",
             "date_range": date_range
         }), 200
-    
+
+# Routes
+@app.route('/', methods=['GET'])
+def root():
+    """
+    Render the homepage with the user interface.
+    """
+    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
+    pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
+    return render_template('new_ui.html', pdfs=pdfs)
+
+@app.route('/home', methods=['GET'])
+def home():
+    """
+    Redirect to the root.
+    """
+    return redirect(url_for('root'))
+
+@app.route('/ask', methods=['POST'])
+def ask():
+    """
+    Handle user questions and return the answer.
+    """
+    question = request.form.get('question')
+    answer = get_answer(question)
+    return render_template('answer.html', question=question, answer=answer)
 
 def login_required(f):
     @wraps(f)
@@ -240,12 +264,9 @@ def logout():
 @app.route('/dashboard')
 def dashboard():
     """
-    Render the dashboard for authenticated users.
+    Redirect to the root.
     """
-    user = session.get('user')
-    if not user:
-        return redirect(url_for('login'))
-    return render_template('new_ui.html', user=user)
+    return redirect(url_for('root'))
 
 
 
@@ -278,7 +299,7 @@ def extract_text_from_docx(file):
         doc = Document(file)
         text = ""
         for paragraph in doc.paragraphs:
-            text += paragraph.text + "\n"
+            text += paragraph.text
         return text
     except Exception as e:
         raise ValueError(f"Failed to extract text from DOCX: {str(e)}")
@@ -294,7 +315,7 @@ def get_answer(question,content,formatted_history):
     Send a question to the external API and retrieve the answer.
     """
     headers = {
-        'Authorization': f'Bearer app-G2VCBPrxr5iWvKOHlL9jxwBt',
+        'Authorization': f'Bearer app-L6FpZUwrFNaGvrtohJq6x83u',
         'Content-Type': 'application/json'
     }
 
@@ -335,9 +356,13 @@ def get_answer(question,content,formatted_history):
 
 @app.route('/files')
 def files():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('files.html', user=session['user'])
+    if MODE == 'test':
+        user = dummy_user
+    else:
+        user = session.get('user')
+        if not user:
+            return redirect(url_for('login'))
+    return render_template('files.html', user=user)
 
 def extract_text_from_file(file):
     """
@@ -366,16 +391,19 @@ def upload_files():
         user_query = f"\n <user_question> {user_question} \n </user_question>"
 
         # Ensure the user is logged in and get the user email from the session
-        user_email = session.get('user', {}).get('email')
-        if not user_email:
-            return jsonify({"error": "User not logged in."}), 401
+        if MODE == 'test':
+            user_email = dummy_user['email']
+        else:
+            user_email = session.get('user', {}).get('email')
+            if not user_email:
+                return jsonify({"error": "User not logged in."}), 401
 
         # Extract text from files
         file_content = ""
         for file in uploaded_files:
             try:
                 extracted_text = extract_text_from_file(file)
-                file_content += f"\n <file_separator>\n{extracted_text} </file_separator>"
+                file_content += f"\n <content>\n{extracted_text} </content>"
             except Exception as e:
                 return jsonify({"error": f"Failed to process {file.filename}: {str(e)}"}), 400
 
@@ -386,7 +414,7 @@ def upload_files():
         ).sort([("timestamp", 1)])  # Sort in ascending order (oldest first)
 
         # Debugging: Check if chat_history is being fetched correctly
-        app.logger.error(f"Chat history retrieved: {chat_history}")
+        app.logger.info(f"Chat history retrieved: {chat_history}")
 
         # Format chat history with appropriate XML separators
         formatted_history = ""
@@ -400,13 +428,25 @@ def upload_files():
             formatted_history += ''.join(chat_entries)  # Join all entries into a single string
 
         # Debugging: Log the formatted chat history to ensure it's populated
-        app.logger.info(f"Formatted chat history: {formatted_history}")
+        # app.logger.info(f"Formatted chat history: {formatted_history}")
 
         # Add the formatted chat history to the user query
         user_query = f"<user_question>{user_question}</user_question>"
 
         # Interact with LLM
         response = get_answer(user_query, file_content, formatted_history)
+
+        # app.logger.info(f"Response from LLM: {response}")
+
+        # Parse the response to separate the actual response and citations
+        if "@@@Perplexity Response:" in response:
+            actual_response, perplexity_response = response.split("@@@Perplexity Response:", 1)
+            response_data = json.loads(perplexity_response)
+            actual_response = actual_response.replace("Actual Response:", "").strip()
+            citations = response_data.get("citations", [])
+        else:
+            actual_response = response
+            citations = []
 
         # Log interaction in MongoDB
         for file in uploaded_files:
@@ -417,7 +457,7 @@ def upload_files():
                     "$push": {
                         "chat_history": {
                             "question": user_question,
-                            "response": response,
+                            "response": actual_response,
                             "timestamp": datetime.utcnow()
                         }
                     },
@@ -428,8 +468,9 @@ def upload_files():
                 },
                 upsert=True
             )
-
-        return jsonify({"response": response})
+        print("Response is rishabh   ",actual_response)
+        print("Citations is rishabh   ",citations)
+        return jsonify({"response": actual_response, "citations": citations})
 
     except Exception as e:
         app.logger.error(f"Error in /upload: {e}")
