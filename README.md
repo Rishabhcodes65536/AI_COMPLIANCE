@@ -1,6 +1,6 @@
-# Minn-AI
+# Minn AI
 
-**Minn-AI** is a comprehensive regulatory compliance platform designed to simplify the compliance process for AI agents. It offers proactive monitoring, easy compliance checks, and future-proof design to adapt to the evolving AI landscape.
+**Minn AI** is a comprehensive regulatory compliance platform designed to simplify the compliance process for AI agents. It offers proactive monitoring, easy compliance checks, and future-proof design to adapt to the evolving AI landscape.
 
 ---
 
@@ -81,7 +81,7 @@ or
 
 ## How It Works
 
-![Minn-AI Process](./Minn-ai_process_v2.png)
+![Minn AI Process](./Minn-ai_process_v2.png)
 
 1. **Textual Content Hashing**:
     - Extracts plain text using `BeautifulSoup` while ignoring scripts/dynamic elements.
@@ -123,7 +123,7 @@ or
 
 ---
 
-## Why Minn-AI is Helpful
+## Why Minn AI is Helpful
 
 - **Efficiency**: Automates the compliance process, saving time and reducing manual effort.
 - **Accuracy**: Provides precise compliance checks and real-time monitoring of regulations.
@@ -135,7 +135,7 @@ or
 
 ## Time Complexity Optimization with Merkle Trees
 
-To efficiently detect changes in webpage content, Minn-AI uses Merkle trees. This approach reduces the time complexity of change detection by breaking the content into smaller blocks, hashing them, and then combining these hashes to form a Merkle root. This method allows for quick comparison of large datasets by comparing the Merkle roots, significantly improving performance and scalability.
+To efficiently detect changes in webpage content, Minn AI uses Merkle trees. This approach reduces the time complexity of change detection by breaking the content into smaller blocks, hashing them, and then combining these hashes to form a Merkle root. This method allows for quick comparison of large datasets by comparing the Merkle roots, significantly improving performance and scalability.
 
 ---
 
