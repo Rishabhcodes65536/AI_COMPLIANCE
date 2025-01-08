@@ -18,3 +18,6 @@ class Config:
     
     # Logging config
     LOG_LEVEL = 'INFO'
+
+
+    #MinnAI provides general 245D compliance information, not legal advice. Please verify all information with qualified legal consent

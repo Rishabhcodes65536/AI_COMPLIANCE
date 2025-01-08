@@ -11,7 +11,6 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <style>
-
     /* Hide scrollbar but keep functionality */
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
@@ -102,6 +101,7 @@
 </head>
 
 <body class="font-roboto bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <!-- Header Section -->
     <header class="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md dark:shadow-xl transition-colors duration-300">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -286,7 +286,7 @@
             </a>
             <a href="#edocs">
                 <button class="px-8 py-4 bg-blue-600 text-white rounded-full text-lg shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
-                    E-Docs
+                    eDocs
                 </button>
             </a>
         </div>
@@ -500,13 +500,27 @@
     </div>
 </section>
 
-<!-- New Section: PDF Previews -->
+<!-- Section: PDF Previews -->
 <section class="py-16 bg-gray-50 dark:bg-gray-900" data-aos="fade-up" id="edocs">
     <div class="container mx-auto px-6">
-        <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-200 text-center mb-12">E-Docs</h2>
+        <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-200 text-center mb-12">245D eDocs Resources</h2>
         <p class="text-lg text-gray-600 dark:text-gray-400 text-center mb-8">
-            The official resources our AI follows to ensure compliance and accuracy.
+            Official Minnesota DHS 245D electronic documentation (eDocs) for compliance requirements and
+            related regulatory guidance.
         </p>
+
+        <!-- Important Notice -->
+        <div class="bg-gray-100 dark:bg-gray-800 border rounded-lg p-6 shadow-md mb-8">
+            <div class="flex flex-col items-center text-center">
+                <i class="fas fa-exclamation-triangle text-blue-600 dark:text-blue-400 text-4xl mb-3"></i>
+                <h2 class="text-lg font-bold text-blue-600 dark:text-blue-400">Important Notice</h2>
+            </div>
+            <p class="mt-4 text-gray-700 dark:text-gray-300 text-center">
+                MinnAI provides access to these official DHS documents for reference purposes only. Please verify all information through the official Minnesota DHS website and consult qualified legal counsel regarding your specific compliance requirements.
+            </p>
+        </div>
+
+        <!-- PDF Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             {% for pdf in pdfs[:9] %}
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg transition-shadow duration-300 transform hover:scale-105 hover:rotate-3 card" data-aos="zoom-in">
@@ -521,6 +535,7 @@
         </div>
     </div>
 </section>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/Draggable.min.js"></script>
@@ -872,12 +887,15 @@
         </div>
     </div>
 </section>
-<!-- Scroll-to-Top Button -->
+
+
+<!-- Scroll-to-Top Button
 <div id="scrollToTop" class="scroll-to-top hidden fixed bottom-6 right-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 rounded-full shadow-lg p-4 cursor-pointer" data-aos="fade-in">
     <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" stroke-width="2" stroke="white" class="h-6 w-6">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 15l-7-7-7 7" />
     </svg>
-</div>
+</div> -->
+
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -1046,6 +1064,39 @@
             darkMode: 'class',
         }
     </script>
+
+<!-- Footer Section -->
+<footer class="sticky bottom-0 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-4">
+    <div class="container mx-auto px-6 text-center">
+        <div class="relative">
+            <div id="banner" class="hidden bg-blue-500 dark:bg-blue-700 text-white py-2 px-4 rounded-lg shadow-lg transition-all duration-300">
+               MinnAI provides general 245D compliance information, not legal advice. Please verify all information with qualified legal counsel.
+            </div>
+            <button id="toggleBanner" class="absolute right-0 top-0 transform -translate-y-1/2 bg-blue-500 dark:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-transform duration-300">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+        </div>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBannerButton = document.getElementById('toggleBanner');
+        const banner = document.getElementById('banner');
+        let bannerVisible = false;
+
+        toggleBannerButton.addEventListener('click', () => {
+            bannerVisible = !bannerVisible;
+            if (bannerVisible) {
+                banner.classList.remove('hidden');
+                toggleBannerButton.querySelector('i').classList.replace('fa-arrow-up', 'fa-arrow-down');
+            } else {
+                banner.classList.add('hidden');
+                toggleBannerButton.querySelector('i').classList.replace('fa-arrow-down', 'fa-arrow-up');
+            }
+        });
+    });
+</script>
 </body>
 
 </html>
