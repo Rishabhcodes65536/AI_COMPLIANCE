@@ -347,6 +347,82 @@ button.copy-button:hover {
     color: #333333;
   }
 
+.custom-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-footer.show {
+  transform: translateY(0);
+}
+
+.footer-content {
+  background-color: var(--bg-panel);
+  margin: 0 16px 16px;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.footer-text {
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.toggle-footer {
+  position: absolute;
+  right: 16px;
+  top: -32px;
+  width: 32px;
+  height: 32px;
+  background-color: var(--bg-panel);
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.toggle-footer:hover {
+  transform: translateY(-2px);
+}
+
+.toggle-footer i {
+  color: var(--text-color);
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-footer.active i {
+  transform: rotate(180deg);
+}
+
+/* Remove old floating note styles */
+.floating-note, .note-trigger, .note-content {
+  display: none;
+}
+
+/* Adjust chat area padding */
+#rightPanel {
+  padding-bottom: 100px;
+}
     </style>
   </head>
   <body class="light-mode">
@@ -602,6 +678,19 @@ button.copy-button:hover {
         </div>
       </div>
     </div>
+
+    <!-- Update the footer HTML to start with up arrow and hidden banner -->
+<div class="custom-footer" id="customFooter">
+  <div class="footer-content">
+    <button class="toggle-footer" id="toggleFooter">
+      <i class="fas fa-chevron-up" id="footerToggleIcon"></i>
+    </button>
+    <p class="footer-text">
+      MinnAI provides general 245D compliance information, not legal advice. Please verify all information with qualified legal counsel.
+    </p>
+  </div>
+</div>
+
     <script>
       document
         .getElementById("theme-toggle")
@@ -922,6 +1011,46 @@ function addCitations(citations) {
         collapsedPanel.classList.add("hidden");
       });
     </script>
+
+    <!-- Replace the footer script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const footer = document.getElementById('customFooter');
+  const toggleBtn = document.getElementById('toggleFooter');
+  const toggleIcon = document.getElementById('footerToggleIcon'); // Specific <i> element
+  let bannerVisible = false;
+
+  // Initialize: banner hidden, arrow pointing up
+  footer.classList.remove('show');
+  toggleIcon.classList.add('fa-chevron-up');
+  toggleIcon.classList.remove('fa-chevron-down');
+
+  toggleBtn.addEventListener('click', () => {
+    bannerVisible = !bannerVisible;
+
+    if (bannerVisible) {
+      footer.classList.add('show'); // Show the footer
+      toggleIcon.classList.remove('fa-chevron-up');
+      toggleIcon.classList.add('fa-chevron-down');
+    } else {
+      footer.classList.remove('show'); // Hide the footer
+      toggleIcon.classList.remove('fa-chevron-down');
+      toggleIcon.classList.add('fa-chevron-up');
+    }
+  });
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && bannerVisible) {
+      bannerVisible = false;
+      footer.classList.remove('show'); // Hide the footer
+      toggleIcon.classList.remove('fa-chevron-down');
+      toggleIcon.classList.add('fa-chevron-up');
+    }
+  });
+});
+
+</script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
   </body>
