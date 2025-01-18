@@ -1,0 +1,144 @@
+ /* Hide scrollbar but keep functionality */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+        overflow-x: scroll;
+        scroll-behavior: smooth;
+    }
+        .btn-custom {
+            background-color: #4A90E2;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #357ABD;
+        }
+
+        .bg-light-custom {
+            background: linear-gradient(90deg, #F8FAFB, #EDEEF0);
+        }
+
+        .text-gradient {
+            background: -webkit-linear-gradient(45deg, #4A90E2, #50E3C2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+
+
+        .scroll-to-top {
+    z-index: 50;
+    transition: all 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hidden {
+    visibility: hidden;
+}
+
+
+   /* Dark Mode Styles */
+        .dark .bg-light-custom {
+            background: #1A202C;
+        }
+
+        .dark .text-gray-800 {
+            color: #E2E8F0;
+        }
+
+        .dark .text-gray-600 {
+            color: #A0AEC0;
+        }
+
+        .dark .bg-white {
+            background-color: #2D3748;
+        }
+
+        .dark .shadow-lg {
+            box-shadow: none;
+        }
+
+        .dark .btn-custom {
+            background-color: #2B6CB0;
+        }
+
+        .dark .btn-custom:hover {
+            background-color: #2C5282;
+        }
+
+    /* Navbar Responsive Styles */
+    .nav-container {
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .nav-logo {
+        min-width: 120px;
+    }
+
+    .nav-auth {
+        min-width: 180px;
+        white-space: nowrap;
+    }
+
+    /* Mobile Menu Styles */
+    @media (max-width: 456px) {
+        .nav-container {
+            padding: 0 0.5rem;
+        }
+
+        .nav-logo {
+            min-width: 100px;
+        }
+
+        .nav-auth {
+            min-width: 140px;
+            font-size: 0.875rem;
+        }
+
+        .nav-auth .google-text {
+            display: none;
+        }
+
+        #g_name {
+            display: none;
+        }
+
+        .nav-auth .google-icon {
+            margin-right: 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .nav-container {
+            padding: 0 0.25rem;
+        }
+
+        .nav-auth {
+            min-width: auto;
+        }
+
+        .nav-auth-button {
+            padding: 0.5rem !important;
+        }
+    }
