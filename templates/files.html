@@ -423,6 +423,38 @@ button.copy-button:hover {
 #rightPanel {
   padding-bottom: 1rem;
 }
+
+/* Common styles for the warning message */
+.warning-message {
+  font-size: 12px;
+  color: #6b7280; /* Text color, adaptable for both dark and light modes */
+  margin-top: 4px;
+  padding: 6px;
+  border-radius: 4px;
+  text-align: left;
+  max-width: 90%; /* Limit width to prevent overflow */
+  margin-left: 10px;
+  background-color: inherit; /* Inherit background color from the AI bubble */
+}
+
+/* Light mode styles for chat-bubble */
+.chat-bubble.ai {
+  background-color: #f3f4f6; /* Light background color for the AI bubble */
+  color: #333; /* Dark text color for the AI bubble */
+}
+
+/* Dark mode specific styles for chat-bubble */
+body.dark-mode .chat-bubble.ai {
+  background-color: #444444; /* Dark background color for AI bubble */
+  color: #e5e7eb; /* Light text color for AI bubble */
+}
+
+/* Dark mode specific styles for the warning message */
+body.dark-mode .warning-message {
+  color: #e8f0fe; /* Lighter text color in dark mode */
+}
+
+
     </style>
   </head>
   <body class="light-mode">
@@ -611,9 +643,7 @@ button.copy-button:hover {
           <i class="fas fa-paper-plane messenger-icon"></i>
         </button>
       </div>
-      <div class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
-        MinnAI provides general 245D compliance information, not legal advice. Please verify all information with qualified legal counsel.
-      </div>
+      
     </div>
   </div>
 
@@ -790,14 +820,27 @@ button.copy-button:hover {
     chatArea.scrollTop = chatArea.scrollHeight;
   }
 
-  function addAIMessage(message) {
-    const chatArea = document.getElementById("chatArea");
-    const aiBubble = document.createElement("div");
-    aiBubble.className = "chat-bubble ai";
-    aiBubble.innerHTML = message;
-    chatArea.appendChild(aiBubble);
-    chatArea.scrollTop = chatArea.scrollHeight;
-  }
+function addAIMessage(message) {
+  const chatArea = document.getElementById("chatArea");
+  
+  // Create the AI response bubble
+  const aiBubble = document.createElement("div");
+  aiBubble.className = "chat-bubble ai";
+  aiBubble.innerHTML = message;
+  chatArea.appendChild(aiBubble);
+
+  // Create the warning message (small text below the AI response)
+  const warningMessage = document.createElement("div");
+  warningMessage.className = "warning-message";
+  warningMessage.textContent = "MinnAI provides general 245D compliance information, not legal advice. Please verify all information with qualified legal counsel.";
+
+  // Append the warning message below the AI bubble
+  chatArea.appendChild(warningMessage);
+
+  // Ensure the chat area scrolls to the bottom
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
 
   uploadButton.onclick = () => {
     uploadModal.style.display = "flex";
