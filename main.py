@@ -552,30 +552,33 @@ def serve_static(filename):
 @login_required
 def delete_chat():
     """
-    Delete all chat history for the current user.
+    Delete only chat history for the current user while preserving the user object.
     """
     try:
         user_email = session.get('user', {}).get('email')
         if not user_email:
             return jsonify({"error": "User not logged in"}), 401
 
-        # Delete all chat history documents for this user
-        result = chats_collection.delete_many({"email": user_email})
+        # Update documents to empty the chat_history array instead of deleting the documents
+        result = chats_collection.update_many(
+            {"email": user_email},
+            {"$set": {"chat_history": []}}
+        )
         
-        if result.deleted_count > 0:
+        if result.modified_count > 0:
             return jsonify({
-                "message": "Chat history deleted successfully",
-                "deleted_count": result.deleted_count
+                "message": "Chat history cleared successfully",
+                "modified_count": result.modified_count
             }), 200
         else:
             return jsonify({
-                "message": "No chat history found to delete"
+                "message": "No chat history found to clear"
             }), 204
 
     except Exception as e:
-        app.logger.error(f"Error deleting chat history: {e}")
+        app.logger.error(f"Error clearing chat history: {e}")
         return jsonify({
-            "error": "Failed to delete chat history"
+            "error": "Failed to clear chat history"
         }), 500
 
 if __name__ == '__main__':
