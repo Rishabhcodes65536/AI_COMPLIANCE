@@ -133,6 +133,10 @@
             display: none;
         }
 
+        #g_name {
+            display: none;
+        }
+
         .nav-auth .google-icon {
             margin-right: 0;
         }
@@ -193,7 +197,7 @@
                             alt="{{ user['name'] }}" 
                             class="h-8 w-8 rounded-full"
                         >
-                        <span class="font-medium hidden md:inline">{{ user['name'] }}</span>
+                        <span class="font-medium md:inline" id="g_name">{{ user['name'] }}</span>
                     </button>
                     <!-- ...existing dropdown menu... -->
                 </div>
