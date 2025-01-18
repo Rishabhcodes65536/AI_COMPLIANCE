@@ -58,7 +58,7 @@ client = MongoClient(MONGO_URI)  # Use the MongoDB URI from the .env file
 db = client["test"]  # Replace with your database name
 users_collection = db["users"]
 chats_collection = db["chats"]
-hashes_collection = db["hashes"]
+hashes_collection = db["hashes_new"]
 
 
 oauth = OAuth(app)
@@ -84,69 +84,118 @@ def fetch_webpage_content(url):
         app.logger.error(f"Error fetching the page: {e}")
         return None
 
-def compute_merkle_root(content):
+def compute_chunk_hashes(content, chunk_size=1000):
     """
-    Compute the Merkle root hash of the given content.
+    Compute hashes of content chunks for efficient comparison.
+    Uses rolling hash for better performance.
     """
     soup = BeautifulSoup(content, 'html.parser')
-    text_blocks = [block.get_text() for block in soup.find_all(['p', 'div', 'span', 'li'])]
-    hashes = [hashlib.md5(block.encode('utf-8')).hexdigest() for block in text_blocks]
+    text = ' '.join(block.get_text() for block in soup.find_all(['p', 'div', 'span', 'li']))
+    
+    chunks = []
+    hashes = []
+    
+    # Create chunks with overlap for better change detection
+    for i in range(0, len(text), chunk_size//2):
+        chunk = text[i:i + chunk_size]
+        if chunk:
+            chunk_hash = hashlib.md5(chunk.encode('utf-8')).hexdigest()
+            chunks.append(chunk)
+            hashes.append(chunk_hash)
+    
+    return chunks, hashes
 
-    while len(hashes) > 1:
-        if len(hashes) % 2 != 0:
-            hashes.append(hashes[-1])
-        new_hashes = []
-        for i in range(0, len(hashes), 2):
-            combined_hash = hashlib.md5((hashes[i] + hashes[i + 1]).encode('utf-8')).hexdigest()
-            new_hashes.append(combined_hash)
-        hashes = new_hashes
-
-    return hashes[0] if hashes else None
+def binary_search_changes(old_hashes, new_hashes):
+    """
+    Use binary search to efficiently locate changes between versions.
+    Returns the indices where changes are detected.
+    """
+    changes = []
+    min_len = min(len(old_hashes), len(new_hashes))
+    
+    def binary_search_chunk(start, end):
+        if start >= end:
+            return
+        
+        mid = (start + end) // 2
+        if mid < min_len and old_hashes[mid] != new_hashes[mid]:
+            changes.append(mid)
+            binary_search_chunk(start, mid)
+            binary_search_chunk(mid + 1, end)
+    
+    binary_search_chunk(0, min_len)
+    
+    # Handle case where new content is longer/shorter
+    if len(new_hashes) > len(old_hashes):
+        changes.extend(range(len(old_hashes), len(new_hashes)))
+    
+    return sorted(changes)
 
 @app.route('/check-update', methods=['GET'])
 def check_update():
     """
-    API endpoint to check if the tracked webpage has been updated.
+    Optimized API endpoint to check if the tracked webpage has been updated.
     """
     content = fetch_webpage_content(URL)
     if content is None:
         return jsonify({"error": "Failed to fetch the page."}), 500
 
-    current_merkle_root = compute_merkle_root(content)
-    if current_merkle_root is None:
-        return jsonify({"error": "Failed to compute Merkle root."}), 500
-
-    last_known_hash_doc = hashes_collection.find_one({"url": URL})
-    last_known_hash = last_known_hash_doc['hash'] if last_known_hash_doc else None
-
+    # Compute new chunks and hashes
+    new_chunks, new_hashes = compute_chunk_hashes(content)
+    
+    # Get previous state from MongoDB
+    last_state = hashes_collection.find_one({"url": URL})
     current_date = datetime.now()
-    initial_date = last_known_hash_doc['last_checked'] if last_known_hash_doc else current_date
-    date_range = f"From {initial_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
-
-    if last_known_hash is None:
+    
+    if not last_state:
+        # First time checking - store initial state
+        hashes_collection.insert_one({
+            "url": URL,
+            "chunks": new_chunks,
+            "hashes": new_hashes,
+            "last_checked": current_date
+        })
+        return jsonify({
+            "message": "Initial check completed.",
+            "date_range": f"From {current_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
+        }), 200
+    
+    # Find changes using binary search
+    old_hashes = last_state['hashes']
+    changed_indices = binary_search_changes(old_hashes, new_hashes)
+    
+    if changed_indices:
+        # Update stored state and return changes
         hashes_collection.update_one(
             {"url": URL},
-            {"$set": {"hash": current_merkle_root, "last_checked": current_date}},
-            upsert=True
+            {
+                "$set": {
+                    "chunks": new_chunks,
+                    "hashes": new_hashes,
+                    "last_checked": current_date
+                }
+            }
         )
+        
+        # Prepare summary of changes
+        changes_summary = [
+            {
+                "index": idx,
+                "new_content": new_chunks[idx] if idx < len(new_chunks) else "Content removed"
+            }
+            for idx in changed_indices[:5]  # Limit to first 5 changes
+        ]
+        
         return jsonify({
-            "message": "Initial check completed, no changes detected.",
-            "date_range": date_range
+            "message": f"Found {len(changed_indices)} changes in the webpage.",
+            "date_range": f"From {last_state['last_checked'].strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}",
+            "changes_sample": changes_summary
         }), 200
-    elif current_merkle_root != last_known_hash:
-        hashes_collection.update_one(
-            {"url": URL},
-            {"$set": {"hash": current_merkle_root, "last_checked": current_date}}
-        )
-        return jsonify({
-            "message": "The webpage has been updated.",
-            "date_range": date_range
-        }), 200
-    else:
-        return jsonify({
-            "message": "No changes detected.",
-            "date_range": date_range
-        }), 200
+    
+    return jsonify({
+        "message": "No changes detected.",
+        "date_range": f"From {last_state['last_checked'].strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}"
+    }), 200
 
 # Routes
 @app.route('/', methods=['GET'])
@@ -154,9 +203,7 @@ def root():
     """
     Render the homepage with the user interface.
     """
-    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
-    pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
-    return render_template('new_ui.html', pdfs=pdfs)
+    return render_template('new_ui.html')
 
 @app.route('/home', methods=['GET'])
 def home():
@@ -275,9 +322,7 @@ def dashboard():
     Redirect to the root.
     """
     user = session.get('user')
-    pdf_directory = os.path.join(app.static_folder, '245D STRUCTURED DATA SET')
-    pdfs = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
-    return render_template('new_ui.html', user=user, pdfs=pdfs)
+    return render_template('new_ui.html', user=user)
 
 
 
@@ -502,6 +547,36 @@ def serve_static(filename):
     Serve static files.
     """
     return send_from_directory(app.static_folder, filename)
+
+@app.route('/delete-chat', methods=['DELETE'])
+@login_required
+def delete_chat():
+    """
+    Delete all chat history for the current user.
+    """
+    try:
+        user_email = session.get('user', {}).get('email')
+        if not user_email:
+            return jsonify({"error": "User not logged in"}), 401
+
+        # Delete all chat history documents for this user
+        result = chats_collection.delete_many({"email": user_email})
+        
+        if result.deleted_count > 0:
+            return jsonify({
+                "message": "Chat history deleted successfully",
+                "deleted_count": result.deleted_count
+            }), 200
+        else:
+            return jsonify({
+                "message": "No chat history found to delete"
+            }), 204
+
+    except Exception as e:
+        app.logger.error(f"Error deleting chat history: {e}")
+        return jsonify({
+            "error": "Failed to delete chat history"
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
