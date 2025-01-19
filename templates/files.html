@@ -5,40 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Agents</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              bgPrimary: "var(--bg-primary)",
-              panel: "var(--bg-panel)",
-              checkbox: "#9CA3AF",
-              checkmark: "#1F2937",
-              primary: {
-                light: "#2563EB",
-                dark: "#93C5FD",
-              },
-              buttonBg: {
-                light: "#3B82F6",
-                dark: "#1E40AF",
-              },
-              buttonHover: {
-                light: "#2563EB",
-                dark: "#1C3AA9",
-              },
-              dashboardText: {
-                light: "#374151",
-                dark: "#E5E7EB",
-              },
-              textPrimary: {
-                light: "#1D4ED8",
-                dark: "#93C5FD",
-              },
-            },
-          },
-        },
-      };
-    </script>
+    
     <style>
       :root {
         --bg-primary: #f9fafb;
@@ -459,93 +426,96 @@ body.dark-mode .warning-message {
   </head>
   <body class="light-mode">
     <header class="sticky top-0 z-50 shadow-md transition-colors duration-300">
-      <div
-        class="container mx-auto px-4 py-3 flex items-center justify-between"
+  <div
+    class="container mx-auto px-4 py-3 flex items-center justify-between"
+  >
+    <!-- Logo and Name -->
+    <div class="flex items-center space-x-4">
+      <a href="{{ url_for('root') }}">
+        <img
+          id="logo"
+          src="{{ url_for('static', filename='dark_logo.png') }}"
+          alt="MinnAI Logo"
+          class="h-10 w-10 rounded-full object-cover"
+        />
+      </a>
+      <span
+        class="hidden md:block text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500"
       >
-        <div class="flex items-center space-x-4">
-          <a href="{{ url_for('root') }}">
-            <img
-              id="logo"
-              src="{{ url_for('static', filename='dark_logo.png') }}"
-              alt="MinnAI Logo"
-              class="h-10 w-10 rounded-full object-cover"
-            />
-          </a>
-          <span
-            class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500"
-          >
-            MinnAI
+        MinnAI
+      </span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex items-center space-x-4">
+      <a
+        href="{{ url_for('root') }}"
+        class="px-4 py-2 rounded-full transition-colors duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+      >
+        Home
+      </a>
+      <button
+        id="theme-toggle"
+        class="p-2 rounded-full transition-colors duration-300 focus:outline-none bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+      >
+        <i
+          id="theme-icon"
+          class="fas transition-colors duration-300 fa-moon text-gray-800 dark:text-gray-200"
+        ></i>
+      </button>
+
+      {% if user %}
+      <!-- User Dropdown -->
+      <div class="relative group">
+        <button
+          id="userDropdown"
+          class="flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-300 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+        >
+          <span class="hidden md:block font-medium text-gray-800 dark:text-gray-200">
+            {{ user['name'] }}
           </span>
+          <svg
+            class="w-4 h-4 text-gray-800 dark:text-gray-200"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+
+        <div
+          class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block transition-all duration-300"
+        >
+          <a
+            href="/dashboard"
+            class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors duration-300"
+          >
+            Dashboard
+          </a>
+          <a
+            href="/logout"
+            class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors duration-300"
+          >
+            Logout
+          </a>
         </div>
-
-        <nav class="flex items-center space-x-4">
-          <a
-            href="{{ url_for('root') }}"
-            class="px-4 py-2 rounded-full transition-colors duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            Home
-          </a>
-          <button
-            id="theme-toggle"
-            class="p-2 rounded-full transition-colors duration-300 focus:outline-none bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-          >
-            <i
-              id="theme-icon"
-              class="fas transition-colors duration-300 fa-moon text-gray-800 dark:text-gray-200"
-            ></i>
-          </button>
-
-          {% if user %}
-          <div class="relative group">
-            <button
-              id="userDropdown"
-              class="flex items-center space-x-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors duration-300 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-            >
-              <span class="font-medium text-gray-800 dark:text-gray-200"
-                >{{ user['name'] }}</span
-              >
-              <svg
-                class="w-4 h-4 ml-1 text-gray-800 dark:text-gray-200"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
-
-            <div
-              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block transition-all duration-300"
-            >
-              <a
-                href="/dashboard"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors duration-300"
-              >
-                Dashboard
-              </a>
-              <a
-                href="/logout"
-                class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors duration-300"
-              >
-                Logout
-              </a>
-            </div>
-          </div>
-          {% else %}
-          <a
-            href="/login"
-            class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
-          >
-            <i class="fab fa-google mr-2"></i>
-            Sign in with Google
-          </a>
-          {% endif %}
-        </nav>
       </div>
-    </header>
+      {% else %}
+      <a
+        href="/login"
+        class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
+      >
+        <i class="fab fa-google mr-2"></i>
+        Sign in with Google
+      </a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
 
     <div class="flex h-screen">
       <!-- Left Panel: Sources -->
@@ -569,27 +539,29 @@ body.dark-mode .warning-message {
           </div>
         </div>
         <div id="citationContainer" class="relative mt-4">
-          <!-- Flex container for citation button with dynamic arrow -->
-          <div class="flex items-center justify-between mb-4">
-            <h1 class="text-lg font-semibold">References</h1>
-            <div id="citationToggle" class="flex items-center cursor-pointer">
-              <span class="text-sm font-medium">View References</span>
-              <i
-                id="citationArrow"
-                class="ml-2 fas fa-angle-right transition-transform duration-300"
-              ></i>
-            </div>
-          </div>
+  <!-- Container for References heading -->
+  <div class="mb-2">
+    <h1 class="text-lg font-semibold">References</h1>
+  </div>
+  <!-- Flex container for citation button with dynamic arrow -->
+  <div id="citationToggle" class="flex items-center cursor-pointer mt-2">
+    <span class="text-sm font-medium">View References</span>
+    <i
+      id="citationArrow"
+      class="ml-2 fas fa-angle-right transition-transform duration-300"
+    ></i>
+  </div>
 
-          <!-- Dropdown content (Citations list) -->
-          <div
-            id="citationDropdown"
-            class="hidden mt-2 p-4 rounded-lg max-w-sm">
-            <ul id="citationList" class="space-y-2 text-sm">
-              <!-- Dynamically generated citations will appear here -->
-            </ul>
-          </div>
-        </div>
+  <!-- Dropdown content (Citations list) -->
+  <div
+    id="citationDropdown"
+    class="hidden mt-2 p-4 rounded-lg max-w-sm">
+    <ul id="citationList" class="space-y-2 text-sm">
+      <!-- Dynamically generated citations will appear here -->
+    </ul>
+  </div>
+</div>
+
       </div>
 
       <!-- Collapsed Left Panel -->

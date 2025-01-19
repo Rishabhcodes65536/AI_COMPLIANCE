@@ -671,3 +671,16 @@ def send_to_api(query, user, files=None, conversation_id="", response_mode="bloc
 # if __name__ == '__main__':
 #     app = create_app()
 #     app.run(debug=True)
+
+
+# chat history
+
+# lets have for a document every user have 1 user Document
+
+# Chat histroy would be an object
+
+# an array
+# {
+#     chat_respone:
+#     Files_invloved:
+# }
